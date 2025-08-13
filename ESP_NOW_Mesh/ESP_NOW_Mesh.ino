@@ -2,8 +2,16 @@
 #include <WiFi.h>
 #include "esp_bt.h"
 
+//IMPORTANT
 //in void loop(), comment out 1 of 2 blocks
 //application WILL malfunction otherwise
+//and always set "myID" to an unique value from your assigned range
+
+
+//Mesh ID 0-69 : Marcel
+//Mesh 70-139  : Renout 
+//Mesh 140-209 : Kino 
+//Mesh 210-279 : Bas 
 
 
 //https://protonestiot.medium.com/automating-node-integration-in-esp-now-mesh-networks-with-esp32-73bc9c0baa3f
