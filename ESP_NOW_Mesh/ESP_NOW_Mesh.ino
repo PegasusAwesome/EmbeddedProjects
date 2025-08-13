@@ -2,6 +2,10 @@
 #include <WiFi.h>
 #include "esp_bt.h"
 
+//in void loop(), comment out 1 of 2 blocks
+//application WILL malfunction otherwise
+
+
 //https://protonestiot.medium.com/automating-node-integration-in-esp-now-mesh-networks-with-esp32-73bc9c0baa3f
 
 typedef struct struct_message {
@@ -67,6 +71,7 @@ void disableMic() {
 
 
 void loop() {
+  //comment out for followers
   if (Serial.available() > 0) {
     String command = Serial.readString();
     command.trim();
@@ -84,6 +89,7 @@ void loop() {
     lastBroadcastTime = currentTime;
   }
 
+  //comment out for main
   // This saves significant power while keeping the device responsive.
   esp_sleep_enable_timer_wakeup(15.0 * 1000000UL); // Wake up after 5 seconds (100 ms)
   esp_light_sleep_start();            
