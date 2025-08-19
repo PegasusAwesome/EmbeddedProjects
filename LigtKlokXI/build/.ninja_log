@@ -2877,3 +2877,13 @@
 39192	39272	0	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/esp-idf/esptool_py/CMakeFiles/app_check_size	fc388b6cc0a215d8
 39273	49535	0	CMakeFiles/flash	b8c77aeeecae2ba1
 39273	49535	0	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/CMakeFiles/flash	b8c77aeeecae2ba1
+116	165	0	esp-idf/esptool_py/CMakeFiles/app_check_size	fc388b6cc0a215d8
+116	165	0	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/esp-idf/esptool_py/CMakeFiles/app_check_size	fc388b6cc0a215d8
+111	202	7768186992783392	bootloader-prefix/src/bootloader-stamp/bootloader-build	11fbe860744cde07
+111	202	7768186992783392	bootloader/bootloader.elf	11fbe860744cde07
+111	202	7768186992783392	bootloader/bootloader.bin	11fbe860744cde07
+111	202	7768186992783392	bootloader/bootloader.map	11fbe860744cde07
+111	202	7768186992783392	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/bootloader-prefix/src/bootloader-stamp/bootloader-build	11fbe860744cde07
+111	202	7768186992783392	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/bootloader/bootloader.elf	11fbe860744cde07
+111	202	7768186992783392	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/bootloader/bootloader.bin	11fbe860744cde07
+111	202	7768186992783392	C:/Users/Marcel/idfworkspace/LigtKlokXI/build/bootloader/bootloader.map	11fbe860744cde07
