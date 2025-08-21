@@ -71,8 +71,8 @@ void loop() {
             return;
         }
 
-        String idStr  = line.substring(0, sep);      // "12"
-        String cmdStr = line.substring(sep + 1);     // "LANTERN_ON"
+        String idStr  = line.substring(0, sep);      //ex. "12"
+        String cmdStr = line.substring(sep + 1);     //ex. "LANTERN_ON"
 
         myData.type = 'C';
         idStr.toCharArray(myData.id, sizeof(myData.id));           // NUL-terminated

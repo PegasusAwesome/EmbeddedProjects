@@ -1,11 +1,63 @@
-#include <EspNowFloodingMesh.h>
+#include <Arduino.h>
+#include "src/Arcanet.h"
+
+// Your device's unique ID
+const String MY_ID = "14";
+
+
+// Callback function to handle received commands
+void onCommandReceived(const String& id, const String& command) {
+  Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
+
+  if (id == MY_ID) {
+    if (command == "ON") {
+      digitalWrite(LED_BUILTIN, LOW);
+    } else if (command == "OFF") {
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+  }
+}
+
+// Create an instance of the Arcanet library
+Arcanet arcanet(MY_ID, onCommandReceived);
 
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
+  // Initialize the Arcanet network
+  arcanet.init();
+
+  Serial.println("Application setup complete.");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Run the Arcanet loop
+  arcanet.loop();
+
+  // Example of sending a command from Serial input
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+    int separator = input.indexOf('_');
+    if (separator > 0) {
+      String id = input.substring(0, separator);
+      String cmd = input.substring(separator + 1);
+
+      if (id == MY_ID) {
+        Serial.println("handle command");
+        onCommandReceived(id, cmd);
+      }
+
+      arcanet.sendCommand(id, cmd);
+    }
+  }
+
+  delay(1750);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+  digitalWrite(LED_BUILTIN, HIGH);
+  
 
 }
