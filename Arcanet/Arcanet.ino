@@ -11,9 +11,9 @@ void onCommandReceived(const String& id, const String& command) {
 
   if (id == MY_ID) {
     if (command == "ON") {
-      digitalWrite(LED_BUILTIN, LOW);
+        //do something cool like: digitalWrite(LED_BUILTIN, LOW);
     } else if (command == "OFF") {
-      digitalWrite(LED_BUILTIN, HIGH);
+        //stop doing  something cool: digitalWrite(LED_BUILTIN, HIGH);
     }
   }
 }
@@ -23,8 +23,9 @@ Arcanet arcanet(MY_ID, onCommandReceived);
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
+//  Optional to create blinking led in loop  
+//  pinMode(LED_BUILTIN, OUTPUT);
+//  digitalWrite(LED_BUILTIN, HIGH);
 
   // Initialize the Arcanet network
   arcanet.init();
@@ -55,10 +56,9 @@ void loop() {
   }
 
   //Simple blink, so you know its working
-  delay(1750);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
-  digitalWrite(LED_BUILTIN, HIGH);
-  
+//   delay(1750);
+//   digitalWrite(LED_BUILTIN, LOW);
+//   delay(500);
+//   digitalWrite(LED_BUILTIN, HIGH);
 
 }
