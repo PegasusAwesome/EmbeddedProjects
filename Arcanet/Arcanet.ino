@@ -54,6 +54,7 @@ void loop() {
     }
   }
 
+  //Simple blink, so you know its working
   delay(1750);
   digitalWrite(LED_BUILTIN, LOW);
   delay(500);
