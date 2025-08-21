@@ -4,16 +4,19 @@
 // Your device's unique ID
 const String MY_ID = "14";
 
+//GPIO of Lantern control pin
+const uint8_t DIM_LANTERN        = 23;
+
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& command) {
   Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
 
   if (id == MY_ID) {
-    if (command == "ON") {
-        //do something cool like: digitalWrite(LED_BUILTIN, LOW);
-    } else if (command == "OFF") {
-        //stop doing  something cool: digitalWrite(LED_BUILTIN, HIGH);
+    if (command == "LANTERN_ON") {
+        digitalWrite(DIM_LANTERN, HIGH);
+    } else if (command == "LANTERN_OFF") {
+        digitalWrite(DIM_LANTERN, LOW);
     }
   }
 }
@@ -23,9 +26,13 @@ Arcanet arcanet(MY_ID, onCommandReceived);
 
 void setup() {
   Serial.begin(115200);
-//  Optional to create blinking led in loop  
-//  pinMode(LED_BUILTIN, OUTPUT);
-//  digitalWrite(LED_BUILTIN, HIGH);
+  //Optional code to create blinking led in loop  
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
+  //Start with latnern off, turn down gpio port (set to 0v)
+  pinMode(DIM_LANTERN, OUTPUT);
+  digitalWrite(DIM_LANTERN, LOW);
 
   // Initialize the Arcanet network
   arcanet.init();
@@ -54,12 +61,11 @@ void loop() {
       arcanet.sendCommand(id, cmd);
     }
   }
-  delay(100);
 
   //Simple blink, so you know its working
-//   delay(1750);
-//   digitalWrite(LED_BUILTIN, LOW);
-//   delay(500);
-//   digitalWrite(LED_BUILTIN, HIGH);
+   delay(1750);
+   digitalWrite(LED_BUILTIN, LOW);
+   delay(500);
+   digitalWrite(LED_BUILTIN, HIGH);
 
 }
