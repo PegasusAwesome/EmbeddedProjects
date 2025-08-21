@@ -1,15 +1,3 @@
-name=Arcanet
-version=1.0.0
-author=MWJ
-maintainer=MWJ <marcel@marceloerlemans.com>
-sentence=Do ESP Now meshing on ESP32 easily.
-paragraph=Small helper library that wraps ESP Now meshing  with a simple API. Based on: https://protonestiot.medium.com/automating-node-integration-in-esp-now-mesh-networks-with-esp32-73bc9c0baa3f
-category=Signal Input/Output
-url=https://github.com/PegasusAwesome/EmbeddedProjects
-architectures=*
-depends=
-
-
 # Arcanet
 
 ESP32 ESP-NOW mini mesh with discovery, deduplication, hop-limited relaying, and a tiny command interpreter
