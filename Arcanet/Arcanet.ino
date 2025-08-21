@@ -54,6 +54,7 @@ void loop() {
       arcanet.sendCommand(id, cmd);
     }
   }
+  delay(100);
 
   //Simple blink, so you know its working
 //   delay(1750);
