@@ -1,0 +1,4 @@
+Arcanet	KEYWORD1
+init	KEYWORD2
+loop	KEYWORD2
+sendCommand	KEYWORD2
