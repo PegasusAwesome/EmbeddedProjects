@@ -120,8 +120,8 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
       char formattedMac[20];  
       formatMacAddress(msg.mac, formattedMac, sizeof(formattedMac));
 
-Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+",  ");
-Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X, ", String(formattedMac) );
+Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
+Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X, " + msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5] );
 Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
 
       if (_instance->_id.equals(msg.id)) {
