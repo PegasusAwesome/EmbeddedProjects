@@ -31,7 +31,9 @@ void Arcanet::init() {
   esp_now_register_recv_cb(onDataRecv);
 
   dedupeInit();
-  Serial.println("Arcanet awake");
+  Serial.println("######################");
+  Serial.println("### Arcanet awakes ###");
+  Serial.println("######################");
 }
 
 void Arcanet::loop() {
@@ -42,14 +44,14 @@ void Arcanet::loop() {
 }
 
 void Arcanet::sendCommand(const String& id, const String& command) {
-Serial.println("sendingCommand to id: "+id+"; command: "+command);
-Serial.printf("sendingCommand A: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
+Serial.println("SendingCommand to id: "+id+"; command: "+command);
 
   struct_message msg;
   msg.type = 'C';
   id.toCharArray(msg.id, sizeof(msg.id));
   command.toCharArray(msg.command, sizeof(msg.command));
   memcpy(msg.originMac, _myMac, 6);
+  memcpy(msg.mac, _myMac, 6);
   msg.msgID = _msgCount++;
   msg.hopCount = 0;
 
@@ -114,11 +116,11 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
       _instance->addPeer(msg.mac);
     } else if (msg.type == 'C') {
       if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgID)) {
-        Serial.print("Duplicate message");
+        Serial.println("Duplicate message");
         return; // Duplicate message
       }
 
-//Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
+Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
 Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
 Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
 
@@ -130,11 +132,11 @@ Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], m
 
 
       if (msg.hopCount < 40 - 1) {
+Serial.print("Resending command to all peers: "+String(msg.command)+", for id: "+String(msg.id)+", ");
         //repeat command over the network
         msg.hopCount++;
         for (int i = 0; i < _instance->_peerCount; i++) {
             esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-Serial.printf("resending msg with mac: %02X:%02X:%02X:%02X:%02X:%02X ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
         }
       }
     }
@@ -154,9 +156,11 @@ bool Arcanet::isDuplicateAndRemember(const uint8_t* origin, int msgID) {
       return true;
     }
   }
+
   memcpy(_dedupeBuf[_dedupeHead].originMac, origin, 6);
   _dedupeBuf[_dedupeHead].msgID = msgID;
   _dedupeHead = (_dedupeHead + 1) % 64;
+
   return false;
 }
 

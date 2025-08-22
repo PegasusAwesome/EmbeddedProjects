@@ -29,7 +29,9 @@ void setup() {
 
   //Do application setup things
 
-  Serial.println("Application setup complete");
+  Serial.println("##################################");
+  Serial.println("### Application setup complete ###");
+  Serial.println("##################################");
 }
 
 void loop() {
