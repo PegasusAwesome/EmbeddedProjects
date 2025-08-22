@@ -56,6 +56,7 @@ private:
   static bool sameMac(const uint8_t* a, const uint8_t* b);
   static void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength);
   static uint64_t rand64();
+  static bool isBroadcastMac(const uint8_t* mac);
 
   // Member variables
   String _id;

@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN14";
+const String MY_ID = "LANTERN15";
 
 //GPIO of Lantern control pin
 const uint8_t DIM_LANTERN        = 23;
