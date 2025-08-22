@@ -29,7 +29,7 @@ void setup() {
 
   //Do application setup things
 
-  Serial.println("Application setup complete.");
+  Serial.println("Application setup complete");
 }
 
 void loop() {

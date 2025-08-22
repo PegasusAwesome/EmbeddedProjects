@@ -66,7 +66,7 @@ void Arcanet::addPeer(const uint8_t* mac) {
     if (esp_now_add_peer(&peerInfo) == ESP_OK) {
       memcpy(_knownPeers[_peerCount], mac, 6);
       _peerCount++;
-Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
+Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     }
   }
 }
