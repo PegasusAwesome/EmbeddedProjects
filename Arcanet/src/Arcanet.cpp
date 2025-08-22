@@ -91,7 +91,6 @@ void Arcanet::broadcastDiscovery() {
   if (!esp_now_is_peer_exist(broadcastAddress)) {
       esp_now_add_peer(&peerInfo);
   }
-Serial.println("BroadcastDiscovery");
 
   esp_now_send(broadcastAddress, (const uint8_t *)&msg, sizeof(msg));
 }
