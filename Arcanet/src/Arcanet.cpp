@@ -9,7 +9,6 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
   _callback = callback;
   _peerCount = 0;
   _lastBroadcastTime = 0;
-  _msgCount = 0;
   _dedupeHead = 0;
   _instance = this;
 }
@@ -52,7 +51,9 @@ Serial.println("SendingCommand to id: "+id+"; command: "+command);
   command.toCharArray(msg.command, sizeof(msg.command));
   memcpy(msg.originMac, _myMac, 6);
   memcpy(msg.mac, _myMac, 6);
-  msg.msgID = _msgCount++;
+//  msg.msgID = _msgCount++;
+
+  msg.msgUID = rand64();
   msg.hopCount = 0;
 
   for (int i = 0; i < _peerCount; i++) {
@@ -115,7 +116,7 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
     if (msg.type == 'D') {
       _instance->addPeer(msg.mac);
     } else if (msg.type == 'C') {
-      if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgID)) {
+      if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
         Serial.println("Duplicate message");
         return; // Duplicate message
       }
@@ -146,19 +147,19 @@ Serial.print("Resending command to all peers: "+String(msg.command)+", for id: "
 void Arcanet::dedupeInit() {
   for (int i = 0; i < 64; ++i) {
     memset(_dedupeBuf[i].originMac, 0, 6);
-    _dedupeBuf[i].msgID = -1;
+    _dedupeBuf[i].msgUID = -1;
   }
 }
 
-bool Arcanet::isDuplicateAndRemember(const uint8_t* origin, int msgID) {
+bool Arcanet::isDuplicateAndRemember(const uint8_t* origin, int msgUID) {
   for (int i = 0; i < 64; ++i) {
-    if (_dedupeBuf[i].msgID == msgID && sameMac(_dedupeBuf[i].originMac, origin)) {
+    if (_dedupeBuf[i].msgUID == msgUID && sameMac(_dedupeBuf[i].originMac, origin)) {
       return true;
     }
   }
 
   memcpy(_dedupeBuf[_dedupeHead].originMac, origin, 6);
-  _dedupeBuf[_dedupeHead].msgID = msgID;
+  _dedupeBuf[_dedupeHead].msgUID = msgUID;
   _dedupeHead = (_dedupeHead + 1) % 64;
 
   return false;
@@ -170,4 +171,10 @@ bool Arcanet::sameMac(const uint8_t* a, const uint8_t* b) {
 
 void Arcanet::formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
     snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+}
+
+uint64_t Arcanet::rand64() {
+  uint64_t hi = (uint64_t) esp_random();
+  uint64_t lo = (uint64_t) esp_random();
+  return (hi << 32) | lo;
 }

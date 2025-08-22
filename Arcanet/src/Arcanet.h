@@ -30,7 +30,7 @@ private:
     char command[32];
     uint8_t originMac[6];
     uint8_t mac[6];
-    int msgID;
+    uint64_t msgUID;
     int hopCount;
   };
 
@@ -49,13 +49,13 @@ private:
   // Deduplication
   struct DedupeEntry {
     uint8_t originMac[6];
-    int msgID;
+    int msgUID;
   };
   void dedupeInit();
   bool isDuplicateAndRemember(const uint8_t* origin, int msgID);
   static bool sameMac(const uint8_t* a, const uint8_t* b);
   static void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength);
-
+  static uint64_t rand64();
 
   // Member variables
   String _id;
@@ -64,7 +64,7 @@ private:
   uint8_t _knownPeers[40][6];
   int _peerCount;
   unsigned long _lastBroadcastTime;
-  int _msgCount;
+//  int _msgCount;
   DedupeEntry _dedupeBuf[64];
   int _dedupeHead;
 
