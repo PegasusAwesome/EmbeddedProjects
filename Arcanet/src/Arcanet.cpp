@@ -35,7 +35,7 @@ void Arcanet::init() {
 }
 
 void Arcanet::loop() {
-  if (millis() - _lastBroadcastTime > 15000) {
+  if (millis() - _lastBroadcastTime > 10000) {
     _lastBroadcastTime = millis();
     broadcastDiscovery();
   }
@@ -43,6 +43,7 @@ void Arcanet::loop() {
 
 void Arcanet::sendCommand(const String& id, const String& command) {
 Serial.println("sendingCommand to id: "+id+"; command: "+command);
+Serial.printf("sendingCommand A: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
 
   struct_message msg;
   msg.type = 'C';
@@ -59,6 +60,7 @@ Serial.println("sendingCommand to id: "+id+"; command: "+command);
 
 void Arcanet::addPeer(const uint8_t* mac) {
   if (_peerCount < 40 && !isKnownPeer(mac)) {
+Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, mac, 6);
     peerInfo.channel = 0;
@@ -66,7 +68,6 @@ void Arcanet::addPeer(const uint8_t* mac) {
     if (esp_now_add_peer(&peerInfo) == ESP_OK) {
       memcpy(_knownPeers[_peerCount], mac, 6);
       _peerCount++;
-Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     }
   }
 }
@@ -113,15 +114,12 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
       _instance->addPeer(msg.mac);
     } else if (msg.type == 'C') {
       if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgID)) {
+        Serial.print("Duplicate message");
         return; // Duplicate message
       }
 
-      const uint8_t *mac = info->src_addr;
-      char formattedMac[20];  
-      formatMacAddress(msg.mac, formattedMac, sizeof(formattedMac));
-
-Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
-Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X, " + msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5] );
+//Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
+Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
 Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
 
       if (_instance->_id.equals(msg.id)) {
@@ -136,6 +134,7 @@ Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], m
         msg.hopCount++;
         for (int i = 0; i < _instance->_peerCount; i++) {
             esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
+Serial.printf("resending msg with mac: %02X:%02X:%02X:%02X:%02X:%02X ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
         }
       }
     }
