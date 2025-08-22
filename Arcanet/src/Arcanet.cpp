@@ -136,7 +136,7 @@ Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], m
         
         memcpy(msg.mac, _instance->_myMac, 6);
 
-Serial.print("Resending command to all peers: "+String(msg.command)+", for id: "+String(msg.id)+", ");
+Serial.println("Resending command to all peers: "+String(msg.command) + ", to: "+msg.id);
         //repeat command over the network
         msg.hopCount++;
         for (int i = 0; i < _instance->_peerCount; i++) {
