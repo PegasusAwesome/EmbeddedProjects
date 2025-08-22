@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #include "Arcanet.h"
 #include "esp_wifi.h"
 
@@ -31,7 +30,7 @@ void Arcanet::init() {
   esp_now_register_recv_cb(onDataRecv);
 
   dedupeInit();
-  Serial.println("Arcanet awake");
+  Serial.println("Init Arcanet successful");
 }
 
 void Arcanet::loop() {
@@ -42,7 +41,7 @@ void Arcanet::loop() {
 }
 
 void Arcanet::sendCommand(const String& id, const String& command) {
-Serial.println("sendingCommand to id: "+id+"; command: "+command);
+Serial.println("id: "+id+"; command: "+command);
 
   struct_message msg;
   msg.type = 'C';
@@ -66,7 +65,6 @@ void Arcanet::addPeer(const uint8_t* mac) {
     if (esp_now_add_peer(&peerInfo) == ESP_OK) {
       memcpy(_knownPeers[_peerCount], mac, 6);
       _peerCount++;
-Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
     }
   }
 }
@@ -91,8 +89,6 @@ void Arcanet::broadcastDiscovery() {
   if (!esp_now_is_peer_exist(broadcastAddress)) {
       esp_now_add_peer(&peerInfo);
   }
-Serial.println("BroadcastDiscovery");
-
   esp_now_send(broadcastAddress, (const uint8_t *)&msg, sizeof(msg));
 }
 
@@ -117,23 +113,13 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         return; // Duplicate message
       }
 
-      const uint8_t *mac = info->src_addr;
-      char formattedMac[20];  
-      formatMacAddress(msg.mac, formattedMac, sizeof(formattedMac));
-
-Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+",  ");
-Serial.printf("sender mac: %02X:%02X:%02X:%02X:%02X:%02X, ", String(formattedMac) );
-Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
-
       if (_instance->_id.equals(msg.id)) {
         if (_instance->_callback) {
           _instance->_callback(msg.id, msg.command);
         }
       }
 
-
       if (msg.hopCount < 40 - 1) {
-        //repeat command over the network
         msg.hopCount++;
         for (int i = 0; i < _instance->_peerCount; i++) {
             esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
@@ -164,8 +150,4 @@ bool Arcanet::isDuplicateAndRemember(const uint8_t* origin, int msgID) {
 
 bool Arcanet::sameMac(const uint8_t* a, const uint8_t* b) {
   return memcmp(a, b, 6) == 0;
-}
-
-void Arcanet::formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
-    snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
 }

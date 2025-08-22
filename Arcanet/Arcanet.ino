@@ -23,12 +23,11 @@ Arcanet arcanet(MY_ID, onCommandReceived);
 
 void setup() {
   Serial.begin(115200);
-//  Optional to create blinking led in loop  
-//  pinMode(LED_BUILTIN, OUTPUT);
-//  digitalWrite(LED_BUILTIN, HIGH);
 
   // Initialize the Arcanet network
   arcanet.init();
+
+  //Do application setup things
 
   Serial.println("Application setup complete.");
 }
@@ -55,11 +54,5 @@ void loop() {
     }
   }
   delay(100);
-
-  //Simple blink, so you know its working
-//   delay(1750);
-//   digitalWrite(LED_BUILTIN, LOW);
-//   delay(500);
-//   digitalWrite(LED_BUILTIN, HIGH);
 
 }

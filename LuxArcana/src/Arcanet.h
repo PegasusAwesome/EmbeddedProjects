@@ -54,8 +54,6 @@ private:
   void dedupeInit();
   bool isDuplicateAndRemember(const uint8_t* origin, int msgID);
   static bool sameMac(const uint8_t* a, const uint8_t* b);
-  static void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength);
-
 
   // Member variables
   String _id;
