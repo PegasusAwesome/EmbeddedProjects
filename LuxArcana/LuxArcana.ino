@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "14";
+const String MY_ID = "LUX1";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE      = 2;   //D1 PT4115 DIM WHITE
@@ -31,31 +31,76 @@ int pwmInfoCount = 0;
 void onCommandReceived(const String& id, const String& command) {
   Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
 
+//  turnAllOff();
+  delay(200);
+
   if (id == MY_ID) {
+
     if (command == "WHITE_ON") {
-        turnLedOn(DIM_PIN_WHITE, 45);
+        turnLedOn(DIM_PIN_WHITE, 65);
     
     } else if (command == "WHITE_OFF") {
-        turnLedOff(DIM_PIN_WHITE, 45);
+        turnLedOff(DIM_PIN_WHITE, 65);
 
     } else if (command == "RED_ON") {
-        turnLedOn(DIM_PIN_RED, 35);
+        turnLedOn(DIM_PIN_RED, 55);
     
     } else if (command == "RED_OFF") {
-        turnLedOff(DIM_PIN_RED, 35);
+        turnLedOff(DIM_PIN_RED, 55);
 
     } else if (command == "GREEN_ON") {
-        turnLedOn(DIM_PIN_GREEN, 45);
+        turnLedOn(DIM_PIN_GREEN, 65);
     
     } else if (command == "GREEN_OFF") {
-        turnLedOff(DIM_PIN_GREEN, 45);
+        turnLedOff(DIM_PIN_GREEN, 65);
 
     } else if (command == "BLUE_ON") {
-        turnLedOn(DIM_PIN_BLUE, 45);
+        turnLedOn(DIM_PIN_BLUE, 65);
     
     } else if (command == "BLUE_OFF") {
-        turnLedOff(DIM_PIN_BLUE, 45);
+        turnLedOff(DIM_PIN_BLUE, 65);
 
+    } else if (command == "MAGENTA_ON") {
+        turnLedOn(DIM_PIN_BLUE, 65);
+        turnLedOn(DIM_PIN_RED, 55);
+
+    } else if (command == "MAGENTA_OFF") {
+        turnLedOff(DIM_PIN_BLUE, 65);
+        turnLedOff(DIM_PIN_RED, 55);
+
+    } else if (command == "CYAN_ON") {
+        turnLedOn(DIM_PIN_BLUE, 65);
+        turnLedOn(DIM_PIN_GREEN, 65);
+
+    } else if (command == "CYAN_OFF") {
+        turnLedOff(DIM_PIN_BLUE, 65);
+        turnLedOff(DIM_PIN_GREEN, 65);
+
+    } else if (command == "YELLOW1_ON") {
+        turnLedOn(DIM_PIN_RED, 55);
+        turnLedOn(DIM_PIN_GREEN, 65);
+
+    } else if (command == "YELLOW1_OFF") {
+        turnLedOff(DIM_PIN_RED, 55);
+        turnLedOff(DIM_PIN_GREEN, 65);
+
+    } else if (command == "YELLOW2_ON") {
+        turnLedOn(DIM_PIN_RED, 60);
+        turnLedOn(DIM_PIN_GREEN, 65);
+
+    } else if (command == "YELLOW2_OFF") {
+        turnLedOff(DIM_PIN_RED, 60);
+        turnLedOff(DIM_PIN_GREEN, 65);
+
+    } else if (command == "DWHITE_ON") {
+        turnLedOn(DIM_PIN_RED, 55);
+        turnLedOn(DIM_PIN_GREEN, 65);
+        turnLedOn(DIM_PIN_BLUE, 65);
+        
+    } else if (command == "DWHITE_OFF") {
+        turnLedOff(DIM_PIN_RED, 55);
+        turnLedOff(DIM_PIN_GREEN, 65);
+        turnLedOff(DIM_PIN_BLUE, 65);
     }
   }
 }
@@ -87,32 +132,45 @@ void loop() {
   }
 
   //Simple blink, so you know its working
-   delay(1750);
+   delay(500);
    digitalWrite(LED_BUILTIN, LOW);
    delay(500);
    digitalWrite(LED_BUILTIN, HIGH);
+
+//    turnLedOn(DIM_PIN_RED, 45);
+//    delay(500);
+//    turnLedOff(DIM_PIN_RED, 45);
+//    delay(500);
 
 }
 
 
 void setup() {
+
   Serial.begin(115200);
   //Optional code to create blinking led in loop  
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-    //init pwm dim pins
-    initDimPin(DIM_PIN_RED);
-    initDimPin(DIM_PIN_GREEN);
-    initDimPin(DIM_PIN_BLUE);
-    initDimPin(DIM_PIN_WHITE);
+  //init pwm dim pins
+  initDimPin(DIM_PIN_RED);
+  initDimPin(DIM_PIN_GREEN);
+  initDimPin(DIM_PIN_BLUE);
+  initDimPin(DIM_PIN_WHITE);
 
+  delay(1000);
+  //turn on led driver (set to 5v on N-Fet)
+  digitalWrite(DIM_PIN_LED_DRIVER, HIGH);
+  pinMode(DIM_PIN_LED_DRIVER, OUTPUT);
+  digitalWrite(DIM_PIN_LED_DRIVER, HIGH);
 
   
   // Initialize the Arcanet network
   arcanet.init();
 
-  Serial.println("Application setup complete.");
+  Serial.println("##################################");
+  Serial.println("### Application setup complete ###");
+  Serial.println("##################################");
 }
 
 
@@ -131,6 +189,13 @@ void turnLedOff(uint8_t DIM_PIN, uint8_t FROM_BRIGHTNESS) {
     }
 }
 
+void turnAllOff() {
+    turnLedOff(DIM_PIN_WHITE, 0);
+    turnLedOff(DIM_PIN_RED, 0);
+    turnLedOff(DIM_PIN_GREEN, 0);
+    turnLedOff(DIM_PIN_BLUE, 0);
+}
+
 PwmInfo* initDimPin(uint8_t pin) {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, HIGH); // ULN IN = HIGH -> OUT ≈ 0 V (LED OFF) during init
@@ -145,7 +210,7 @@ PwmInfo* initDimPin(uint8_t pin) {
         return &pwmInfos[pwmInfoCount-1];
     }
 
-    Serial.printf("LEDC attach failed on pin %u Hz)\n", pin, FREQ_HZ);
+    Serial.printf("LEDC attach failed on pin %u %dHz)\n", pin, FREQ_HZ);
     static PwmInfo bad{pin,0,0,false};
 
     return &bad;

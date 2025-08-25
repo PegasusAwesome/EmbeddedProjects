@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN14";
+const String MY_ID = "4";
 
 
 // Callback function to handle received commands

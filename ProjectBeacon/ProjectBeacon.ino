@@ -2,10 +2,13 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN15";
+const String MY_ID = "LANTERN11";
 
 //GPIO of Lantern control pin
 const uint8_t DIM_LANTERN        = 23;
+
+//GPIO of Popwer (N-Fet) pin
+const uint8_t DIM_POWER          = 1;
 
 
 // Callback function to handle received commands
@@ -15,8 +18,12 @@ void onCommandReceived(const String& id, const String& command) {
   if (id == MY_ID) {
     if (command == "LANTERN_ON") {
         digitalWrite(DIM_LANTERN, HIGH);
+
     } else if (command == "LANTERN_OFF") {
         digitalWrite(DIM_LANTERN, LOW);
+
+    } else if (command == "POWER_OFF") {
+        digitalWrite(DIM_POWER, LOW);
     }
   }
 }
@@ -33,6 +40,9 @@ void setup() {
   //Start with latnern off, turn down gpio port (set to 0v)
   pinMode(DIM_LANTERN, OUTPUT);
   digitalWrite(DIM_LANTERN, LOW);
+
+  pinMode(DIM_POWER, OUTPUT);
+  digitalWrite(DIM_POWER, HIGH);
 
   // Initialize the Arcanet network
   arcanet.init();

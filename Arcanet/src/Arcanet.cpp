@@ -15,8 +15,8 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
 
 void Arcanet::init() {
     WiFi.mode(WIFI_STA);
-    delay(1250);
-    
+    delay(1000);
+
     WiFi.macAddress(_myMac);
     Serial.printf("My MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
 
