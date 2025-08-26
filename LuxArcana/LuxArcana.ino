@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LUX1";
+const String MY_ID = "LUX2";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE      = 2;   //D1 PT4115 DIM WHITE
@@ -137,10 +137,10 @@ void loop() {
    delay(500);
    digitalWrite(LED_BUILTIN, HIGH);
 
-//    turnLedOn(DIM_PIN_RED, 45);
-//    delay(500);
-//    turnLedOff(DIM_PIN_RED, 45);
-//    delay(500);
+   turnLedOn(DIM_PIN_RED, 75);
+   delay(1000);
+   turnLedOff(DIM_PIN_RED, 75);
+   delay(1500);
 
 }
 
@@ -158,7 +158,7 @@ void setup() {
   initDimPin(DIM_PIN_BLUE);
   initDimPin(DIM_PIN_WHITE);
 
-  delay(1000);
+  delay(1500);
   //turn on led driver (set to 5v on N-Fet)
   digitalWrite(DIM_PIN_LED_DRIVER, HIGH);
   pinMode(DIM_PIN_LED_DRIVER, OUTPUT);
