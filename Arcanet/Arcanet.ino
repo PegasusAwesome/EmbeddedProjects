@@ -7,15 +7,15 @@ const String MY_ID = "4";
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& command) {
-  Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
+    Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
 
-  if (id == MY_ID) {
-    if (command == "ON") {
-        //do something cool like: digitalWrite(LED_BUILTIN, LOW);
-    } else if (command == "OFF") {
-        //stop doing  something cool: digitalWrite(LED_BUILTIN, HIGH);
+    if (id == MY_ID) {
+        if (command == "ON") {
+            //do something cool like: digitalWrite(LED_BUILTIN, LOW);
+        } else if (command == "OFF") {
+            //stop doing  something cool: digitalWrite(LED_BUILTIN, HIGH);
+        }
     }
-  }
 }
 
 // Create an instance of the Arcanet library

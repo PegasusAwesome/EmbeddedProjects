@@ -11,11 +11,30 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
     _lastBroadcastTime = 0;
     _dedupeHead = 0;
     _instance = this;
+    _bestRssi = 100;
 }
 
 void Arcanet::init() {
+    #if CONFIG_IDF_TARGET_ESP32S3
+        Serial.println("Build‑time: ESP32‑S3 -> skipping external‑antenna enable");
+    #elif CONFIG_IDF_TARGET_ESP32C6
+        Serial.println("Build‑time: ESP32‑C6 -> enabling external antenna");
+        pinMode(WIFI_ENABLE, OUTPUT); // pinMode(3, OUTPUT);
+        digitalWrite(WIFI_ENABLE, LOW); // digitalWrite(3, LOW); // Activate RF switch control
+
+        delay(200);
+
+        pinMode(WIFI_ANT_CONFIG, OUTPUT); // pinMode(14, OUTPUT);
+        digitalWrite(WIFI_ANT_CONFIG, HIGH); // digitalWrite(14, HIGH); // Use external antenna
+        delay(500);
+    #else
+        #warning "Unknown ESP‑IDF target! Check antenna‑pin logic."
+        Serial.println("Build‑time: UNKNOWN chip -> please verify antenna logic");
+    #endif
+
     WiFi.mode(WIFI_STA);
     delay(1000);
+    WiFi.setProtocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_LR);
 
     WiFi.macAddress(_myMac);
     Serial.printf("My MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", _myMac[0], _myMac[1], _myMac[2], _myMac[3], _myMac[4], _myMac[5]);
@@ -46,15 +65,16 @@ void Arcanet::loop() {
 }
 
 void Arcanet::sendCommand(const String& id, const String& command) {
-Serial.println("Sending to id: "+id+"; command: "+command);
+Serial.println("Sending command to id: "+id+"; command: "+command);
 
     struct_message msg;
     msg.type = 'C';
     id.toCharArray(msg.id, sizeof(msg.id));
+    _id.toCharArray(msg.originId, sizeof(msg.originId));
     command.toCharArray(msg.command, sizeof(msg.command));
+
     memcpy(msg.originMac, _myMac, 6);
     memcpy(msg.mac, _myMac, 6);
-//  msg.msgID = _msgCount++;
 
     msg.msgUID = rand64();
     msg.hopCount = 0;
@@ -64,9 +84,10 @@ Serial.println("Sending to id: "+id+"; command: "+command);
     }
 }
 
-void Arcanet::addPeer(const uint8_t* mac) {
+void Arcanet::addPeer(const uint8_t* mac, const String& originId) {
     if (_peerCount < 40 && !isKnownPeer(mac)) {
-Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+//Serial.printf("Added peer: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+Serial.println("Added peer: "+originId);
         esp_now_peer_info_t peerInfo = {};
         memcpy(peerInfo.peer_addr, mac, 6);
         peerInfo.channel = 0;
@@ -90,6 +111,8 @@ bool Arcanet::isKnownPeer(const uint8_t* mac) {
 void Arcanet::broadcastDiscovery() {
     struct_message msg;
     msg.type = 'D';
+    _id.toCharArray(msg.originId, sizeof(msg.originId));
+
     memcpy(msg.mac, _myMac, 6);
     uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   
@@ -102,10 +125,10 @@ void Arcanet::broadcastDiscovery() {
     esp_now_send(broadcastAddress, (const uint8_t *)&msg, sizeof(msg));
 }
 
-void Arcanet::broadcast(const struct_message &message) {
-    uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    esp_now_send(broadcastAddress, (const uint8_t *)&message, sizeof(message));
-}
+// void Arcanet::broadcast(const struct_message &message) {
+//     uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+//     esp_now_send(broadcastAddress, (const uint8_t *)&message, sizeof(message));
+// }
 
 void Arcanet::onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status) {
     //You can add logic here to handle send status
@@ -125,26 +148,32 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         return;
     }
 
+    // ——— log the signal strength ———
+    int8_t rssi = info->rx_ctrl->rssi;
+    if (rssi > _instance->_bestRssi) {
+      _instance->_bestRssi = rssi;
+    }
+    Serial.printf("Received packet RSSI = %d dBm\n", _instance->_bestRssi);
+
     if (msg.type == 'D') {
-        _instance->addPeer(msg.mac);
+        _instance->addPeer(msg.mac, msg.originId);
     } else if (msg.type == 'C') {
         if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
             Serial.println("Duplicate message");
             return; // Duplicate message
         }
 
-Serial.print("Received command "+String(msg.command)+", for id: "+String(msg.id)+", ");
-Serial.printf("from mac: %02X:%02X:%02X:%02X:%02X:%02X, ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
-Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
+Serial.println("Received command "+String(msg.command)+", from originId: "+msg.originId+", for id: "+String(msg.id));
+// Serial.printf("from mac: %02X:%02X:%02X:%02X:%02X:%02X, ", msg.mac[0], msg.mac[1], msg.mac[2], msg.mac[3], msg.mac[4], msg.mac[5]);
+// Serial.printf("origin mac: %02X:%02X:%02X:%02X:%02X:%02X\n", msg.originMac[0], msg.originMac[1], msg.originMac[2], msg.originMac[3], msg.originMac[4], msg.originMac[5]);
 
         if (_instance->_id.equals(msg.id) && _instance->_callback) {
             _instance->_callback(msg.id, msg.command);
         }
 
-
         if (msg.hopCount < 40 - 1) {
             memcpy(msg.mac, _instance->_myMac, 6);
-Serial.println("Resending command to all peers: "+String(msg.command) + ", to: "+msg.id);
+//Serial.println("Resending command to all peers: "+String(msg.command) + ", to: "+msg.id);
 
             //repeat command over the network
             msg.hopCount++;
@@ -152,6 +181,7 @@ Serial.println("Resending command to all peers: "+String(msg.command) + ", to: "
                 esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
             }
         }
+
     }
 
 }

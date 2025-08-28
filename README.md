@@ -10,3 +10,8 @@ return string after send
 ID broadcasting
 Batt lvl broadcasting
 Best signal
+
+
+
+
+

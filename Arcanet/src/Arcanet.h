@@ -27,7 +27,8 @@ private:
   struct struct_message {
     char type;
     char id[32];
-    char command[32];
+    char originId[32];
+    char command[256];
     uint8_t originMac[6];
     uint8_t mac[6];
     uint64_t msgUID;
@@ -35,7 +36,7 @@ private:
   };
 
   // Peer management
-  void addPeer(const uint8_t* mac);
+  void addPeer(const uint8_t* mac, const String& id);
   bool isKnownPeer(const uint8_t* mac);
 
   // Broadcasting
@@ -68,6 +69,7 @@ private:
 //  int _msgCount;
   DedupeEntry _dedupeBuf[64];
   int _dedupeHead;
+  int8_t _bestRssi;
 
   // Singleton instance
   static Arcanet* _instance;

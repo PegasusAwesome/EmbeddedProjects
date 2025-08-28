@@ -136,12 +136,7 @@ void loop() {
    digitalWrite(LED_BUILTIN, LOW);
    delay(500);
    digitalWrite(LED_BUILTIN, HIGH);
-
-   turnLedOn(DIM_PIN_RED, 75);
-   delay(1000);
-   turnLedOff(DIM_PIN_RED, 75);
-   delay(1500);
-
+   
 }
 
 
@@ -159,12 +154,12 @@ void setup() {
   initDimPin(DIM_PIN_WHITE);
 
   delay(1500);
-  //turn on led driver (set to 5v on N-Fet)
+  
+  //turn on led driver (set to 3.3v on ULN, becomes 0V on P-Fet, means P-Fet is open/conducing)
   digitalWrite(DIM_PIN_LED_DRIVER, HIGH);
   pinMode(DIM_PIN_LED_DRIVER, OUTPUT);
   digitalWrite(DIM_PIN_LED_DRIVER, HIGH);
 
-  
   // Initialize the Arcanet network
   arcanet.init();
 
