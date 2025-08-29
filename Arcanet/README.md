@@ -11,7 +11,7 @@ ESP32 ESP-NOW mini mesh with discovery, deduplication, hop-limited relaying, and
 - Commands (example): `LANTERN_ON/OFF`, `WHITE|RED|GREEN|BLUE_ON/OFF`, `ON/OFF` (builtin LED)
 
 ## Install
-Copy this folder into `Arduino/libraries/EspNowMeshLamp`, restart Arduino IDE, and open *File -> Examples -> EspNowMeshLamp -> BasicMeshDemo*.
+Copy this folder into `Arduino/libraries/Arcanet`, restart Arduino IDE, and open Arcanet.ino.
 
 ## Notes
 - Adjust pins to your hardware.
