@@ -68,8 +68,19 @@ private:
   void broadcast(const struct_message &message);
 
   // ESP-NOW callbacks
-  static void onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
+// -------- feature detection (IDF version) ----------
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,5,0)
+static void onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
+#else
+static void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
+#endif
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
   static void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len);
+#else
+  static void onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len);
+#endif
+
 
   // Deduplication
   struct DedupeEntry {

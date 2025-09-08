@@ -157,12 +157,22 @@ void Arcanet::broadcastDiscovery() {
     }
 }
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,5,0)
 void Arcanet::onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status) {
     (void)tx_info;
     (void)status;
     // Could implement peer health tracking based on status
 }
+#else
+void Arcanet::onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    (void)mac_addr;
+    (void)status;
+    // Could implement peer health tracking based on status
+}
+#endif
 
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
 void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len) {
     if (len != sizeof(struct_message)) {
         return;
@@ -238,6 +248,73 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         }
     }
 }
+#else
+void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
+    if (len != sizeof(struct_message)) {
+        return;
+    }
+
+    struct_message msg;
+    memcpy(&msg, incomingData, sizeof(msg));
+    const uint8_t *sender_mac = mac_addr;
+
+    if (msg.type == 'D') {
+        _instance->addPeer(msg.mac, msg.originId);
+        return;
+    }
+
+    if (msg.type == 'C') {
+        if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
+            ARC_LOG("Duplicate message");
+            return; // Duplicate message
+        }
+
+        ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
+
+        // If target id matches this node, dispatch to command-specific handler or global callback
+        if (_instance->_id.equals(msg.id)) {
+            bool handled = false;
+            for (int h = 0; h < _instance->_handlerCount; ++h) {
+                if (_instance->_handlers[h].command.equals(String(msg.command))) {
+                    if (_instance->_handlers[h].cb) {
+                        _instance->_handlers[h].cb(msg.id, msg.command);
+                        handled = true;
+                        break;
+                    }
+                }
+            }
+            if (!handled && _instance->_callback) {
+                _instance->_callback(msg.id, msg.command);
+            }
+        }
+
+        if (msg.hopCount < ARCANET_MAX_HOPS) {
+            memcpy(msg.mac, _instance->_myMac, 6);
+
+            // optional: small randomized backoff to reduce collisions (disabled by default)
+            #ifdef ARCANET_FORWARD_BACKOFF_MAX_MS
+            uint32_t jitter = esp_random() % (uint32_t)ARCANET_FORWARD_BACKOFF_MAX_MS;
+            if (jitter) {
+                delay(jitter);
+            }
+            #endif
+
+            msg.hopCount++;
+            for (int i = 0; i < _instance->_peerCount; i++) {
+                // Skip sending back to the sender to save airtime
+                if (sameMac(_instance->_knownPeers[i], sender_mac)) {
+                    continue;
+                }
+                esp_err_t err = esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
+                if (err != ESP_OK) {
+                    ARC_LOGF("Relay send error: %d\n", (int)err);
+                }
+            }
+        }
+    }
+}
+#endif
+
 
 void Arcanet::dedupeInit() {
   for (int i = 0; i < ARCANET_DEDUPE_SIZE; ++i) {

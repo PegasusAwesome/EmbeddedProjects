@@ -1,8 +1,7 @@
-#include <Arduino.h>
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "4";
+const String MY_ID = "LANTERN17";
 
 
 // Callback function to handle received commands
