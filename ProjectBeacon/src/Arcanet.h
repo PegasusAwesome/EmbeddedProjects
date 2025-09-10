@@ -51,8 +51,8 @@ private:
   struct __attribute__((packed)) struct_message {
     char type;              // 'D' = discovery, 'C' = command
     char id[32];            // target id (for commands)
-    char originId[32];      // originator id
-    char command[256];      // command payload
+    char originId[28];      // originator id
+    char command[128];      // command payload
     uint8_t originMac[6];   // originator MAC
     uint8_t mac[6];         // last-hop MAC
     uint64_t msgUID;        // 64-bit unique id
@@ -68,8 +68,19 @@ private:
   void broadcast(const struct_message &message);
 
   // ESP-NOW callbacks
-  static void onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
+// -------- feature detection (IDF version) ----------
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,5,0)
+static void onDataSent(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
+#else
+static void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
+#endif
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
   static void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len);
+#else
+  static void onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len);
+#endif
+
 
   // Deduplication
   struct DedupeEntry {
@@ -95,12 +106,6 @@ private:
   int8_t _bestRssi; // max RSSI seen
   int8_t _lastRssi; // last RSSI seen
   uint8_t _channel; // 0 = current, else fixed channel
-
-  // Optional per-command handlers (QoL). If none match, fall back to global _callback.
-  struct CommandHandler { String command; message_callback_t cb; };
-  static const int MAX_HANDLERS = 16;
-  CommandHandler _handlers[MAX_HANDLERS];
-  int _handlerCount = 0;
 
   // Singleton instance
   static Arcanet* _instance;

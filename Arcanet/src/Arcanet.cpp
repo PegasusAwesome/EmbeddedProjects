@@ -29,6 +29,8 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
 }
 
 void Arcanet::init() {
+    setChannel(1);
+    
     #if CONFIG_IDF_TARGET_ESP32S3
         ARC_LOG("Build-time: ESP32-S3 -> skipping external-antenna enable");
     #elif CONFIG_IDF_TARGET_ESP32C6
@@ -206,21 +208,8 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
 
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
-        // If target id matches this node, dispatch to command-specific handler or global callback
-        if (_instance->_id.equals(msg.id)) {
-            bool handled = false;
-            for (int h = 0; h < _instance->_handlerCount; ++h) {
-                if (_instance->_handlers[h].command.equals(String(msg.command))) {
-                    if (_instance->_handlers[h].cb) {
-                        _instance->_handlers[h].cb(msg.id, msg.command);
-                        handled = true;
-                        break;
-                    }
-                }
-            }
-            if (!handled && _instance->_callback) {
-                _instance->_callback(msg.id, msg.command);
-            }
+        if (_instance->_callback) {
+            _instance->_callback(msg.id, msg.command);
         }
 
         if (msg.hopCount < ARCANET_MAX_HOPS) {
@@ -271,21 +260,8 @@ void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, i
 
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
-        // If target id matches this node, dispatch to command-specific handler or global callback
-        if (_instance->_id.equals(msg.id)) {
-            bool handled = false;
-            for (int h = 0; h < _instance->_handlerCount; ++h) {
-                if (_instance->_handlers[h].command.equals(String(msg.command))) {
-                    if (_instance->_handlers[h].cb) {
-                        _instance->_handlers[h].cb(msg.id, msg.command);
-                        handled = true;
-                        break;
-                    }
-                }
-            }
-            if (!handled && _instance->_callback) {
-                _instance->_callback(msg.id, msg.command);
-            }
+        if (_instance->_callback) {
+            _instance->_callback(msg.id, msg.command);
         }
 
         if (msg.hopCount < ARCANET_MAX_HOPS) {
@@ -358,10 +334,4 @@ bool Arcanet::isBroadcastMac(const uint8_t* mac) {
 
 void Arcanet::setChannel(uint8_t channel) {
     _channel = channel; // apply on next init and for future peers
-}
-
-bool Arcanet::registerCommand(const String& command, message_callback_t cb) {
-    if (_handlerCount >= MAX_HANDLERS) return false;
-    _handlers[_handlerCount++] = {command, cb};
-    return true;
 }
