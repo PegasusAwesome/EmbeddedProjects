@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN17";
+const String MY_ID = "LANTERN21";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -12,52 +12,70 @@ const uint8_t PIN_BATTERY        = 0;
 
 //GPIO of Lantern control pin
 const uint8_t PIN_LANTERN        = 23;
+ 
+unsigned long updateScheduledAt = 0;
+uint32_t tUpdatePeriod = 60000;
+boolean pendingUpdate = false;
+int minBatteryLevel = 2900;
+boolean relicStatus = false;
 
-unsigned long battUpdateScheduledAt = 0;
-boolean pendingBatteryUpdate = false;
-float minBatteryLevel = 3.0f;
+uint32_t tLastBlinkOn  = 0;
+uint32_t tLastBlinkOff = 0;
+uint32_t tBlinkTime    = 200;
+uint32_t tBlinkPeriod  = 3000;
+
+uint32_t tDemoLuxPeriod = 3000;
+uint32_t tDemoLux       = 0;
+int16_t  hue            = 0;
+
+uint32_t now            = millis();
 
 // Callback function to handle received commands
-void onCommandReceived(const String& id, const String& command) {
-    Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
-
+void onCommandReceived(const String& id, const String& msg) {
     if (id == MY_ID) {
-        if (command == "LANTERN_ON") {
+        if (msg == "LANTERN_ON") {
             digitalWrite(PIN_LANTERN, HIGH);
+            relicStatus = true;
+            prepareUpdateNow();
 
-        } else if (command == "LANTERN_OFF") {
+        } else if (msg == "LANTERN_OFF") {
             digitalWrite(PIN_LANTERN, LOW);
+            relicStatus = false;
+            prepareUpdateNow();
 
-        } else if (command == "POWER_OFF") {
+        } else if (msg == "POWER_OFF") {
             digitalWrite(PIN_POWER, LOW);
 
-        } else if (command == "BATTERYLEVEL_SHOW") {
-            prepareBatteryLevelUpdate();
+        } else if (msg == "SEND_UPDATE") {
+            prepareUpdateNow();
 
         }
     } else if (id == "LANTERNALL") {
-        if (command == "LANTERN_ON") {
+        if (msg == "LANTERN_ON") {
             digitalWrite(PIN_LANTERN, HIGH);
+            relicStatus = true;
+            prepareUpdateNow();
 
-        } else if (command == "LANTERN_OFF") {
+        } else if (msg == "LANTERN_OFF") {
             digitalWrite(PIN_LANTERN, LOW);
+            relicStatus = false;
+            prepareUpdateNow();
 
-        } else if (command == "POWER_OFF") {
+        } else if (msg == "POWER_OFF") {
             digitalWrite(PIN_POWER, LOW);
 
-        } else if (command == "BATTERYLEVEL_SHOW") {
-            prepareBatteryLevelUpdate();
+        } else if (msg == "SEND_UPDATE") {
+            prepareUpdateNow();
 
         }
 
     } else if (id == "ALL") {
-        if (command == "BATTERYLEVEL_SHOW") {
-            prepareBatteryLevelUpdate();
+        if (msg == "SEND_UPDATE") {
+            prepareUpdateNow();
 
         }
 
     }
-
 }
 
 // Create an instance of the Arcanet library
@@ -87,71 +105,122 @@ void setup() {
     Serial.println("####################################");
     Serial.println("### ProjectBeacon setup complete ###");
     Serial.println("####################################");
+    Serial.println("My ID is: "+String(MY_ID));
+
+    //Show lantern is working
+    digitalWrite(PIN_LANTERN, HIGH);
+    delay(400);
+    digitalWrite(PIN_LANTERN, LOW);
+    delay(400);
+    digitalWrite(PIN_LANTERN, HIGH);
+    delay(400);
+    digitalWrite(PIN_LANTERN, LOW);
+    delay(400);
+    digitalWrite(PIN_LANTERN, HIGH);
+    delay(400);
+    digitalWrite(PIN_LANTERN, LOW);
+
+    pendingUpdate = true;
+    updateScheduledAt = millis() + 30000;
+
 }
 
 void loop() {
-    // Run the Arcanet loop
-    arcanet.loop();
+    now = millis();
 
-    //Check the battery
-    checkBatteryLevel();
+    arcanet.loop();//housekeeping our presence in Arcanet
+//    readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+    blink();//show a blinking led so we know this beacon is on
+    sendUpdate();//send update if requested
+    updateControllers();//prepare the regular update
 
-    if (pendingBatteryUpdate && millis() >= battUpdateScheduledAt) {
-        sendBatteryLevelUpdate();
+//    demoLux();
+
+    delay(1);
+}
+
+void demoLux() {
+    if ( now > tDemoLux + tDemoLuxPeriod) {
+        arcanet.sendCommand("LUX2", "SET_HUE_"+String(hue));
+        arcanet.sendCommand("LUX3", "SET_HUE_"+String( (hue+120)%360) );
+        arcanet.sendCommand("LUX4", "SET_HUE_"+String( (hue+240)%360) );
+        tDemoLux = now;
+        hue = hue>=360 ? 0 : hue+1;
+    }
+}
+
+void updateControllers() {
+    if ( now > updateScheduledAt + tUpdatePeriod) {
+        prepareUpdate();
+        checkBatteryLevel();
+    }
+}
+
+
+void blink() {
+    if (now > tBlinkPeriod + tLastBlinkOn) {
+        tLastBlinkOn  = now;
+        tLastBlinkOff = now + tBlinkTime;
+        digitalWrite(LED_BUILTIN, LOW);
     }
 
-    //delay(100);
+    if (now > tLastBlinkOff) {
+        digitalWrite(LED_BUILTIN, HIGH);
+    }
+}
 
-    //   // Example of sending a command from Serial input
-    // if (Serial.available() > 0) {
-    //     String input = Serial.readStringUntil('\n');
-    //     input.trim();
-    //     int separator = input.indexOf('_');
-    //     if (separator > 0) {
-    //     String id = input.substring(0, separator);
-    //     String cmd = input.substring(separator + 1);
+void readSerial() {
+    if (Serial.available() > 0) {
+        String input = Serial.readStringUntil('\n');
+        input.trim();
+        int separator = input.indexOf('_');
+        if (separator > 0) {
+            String id = input.substring(0, separator);
+            String cmd = input.substring(separator + 1);
 
-    //     if (id == MY_ID) {
-    //         Serial.println("handle command");
-    //         onCommandReceived(id, cmd);
-    //     }
+            if (id == MY_ID) {
+                Serial.println("handle command");
+                onCommandReceived(id, cmd);
+            }
 
-    //     arcanet.sendCommand(id, cmd);
-    //     }
-    // }
-
-     delay(1750);
-     digitalWrite(LED_BUILTIN, LOW);
-     delay(500);
-     digitalWrite(LED_BUILTIN, HIGH);
-
+            arcanet.sendCommand(id, cmd);
+        }
+    }
 }
 
 void checkBatteryLevel() {
     if (getBatteryLevel()<minBatteryLevel) {
         delay(50);
         if (getBatteryLevel()<minBatteryLevel) {
-            pinMode(PIN_POWER, OUTPUT);
-            digitalWrite(PIN_POWER, LOW);
+            delay(50);
+            if (getBatteryLevel()<minBatteryLevel) {
+                pinMode(PIN_POWER, OUTPUT);
+                digitalWrite(PIN_POWER, LOW);
+            }
         }
     }
 }
 
-float getBatteryLevel() {
+int getBatteryLevel() {
     int mv = analogReadMilliVolts(PIN_BATTERY); 
-    float v_adc  = mv / 1000.0;                // 
-    float v_batt = v_adc / 0.5;                // divider ratio 1:2
-    return v_batt;
+    mv = mv / 0.5;
+    return mv;
 }
 
-void prepareBatteryLevelUpdate() {
-    pendingBatteryUpdate = true;
-    battUpdateScheduledAt = millis() + random(0, 3000);
+void prepareUpdate() {
+    pendingUpdate = true;
+    updateScheduledAt = millis() + random(0, 2000);
+}
+void prepareUpdateNow() {
+    pendingUpdate = true;
+    updateScheduledAt = millis() + 10 + random(0, 10);
 }
 
-void sendBatteryLevelUpdate() {
-    pendingBatteryUpdate = false;
-    float v_batt = getBatteryLevel();
-    arcanet.sendCommand("ALL", "BATTERYLEVEL_"+MY_ID+"_"+String(v_batt));
+void sendUpdate() {
+    if (pendingUpdate && millis() >= updateScheduledAt) {
+        pendingUpdate = false;
+        int v_batt = getBatteryLevel();
+        arcanet.sendCommand("CONTROLLER", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_"+( relicStatus ? "ON" : "OFF") );
+    }
 }
 
