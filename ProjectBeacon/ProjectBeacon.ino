@@ -74,7 +74,6 @@ void onCommandReceived(const String& id, const String& msg) {
             prepareUpdateNow();
 
         }
-
     }
 }
 
