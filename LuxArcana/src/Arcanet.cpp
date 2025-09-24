@@ -4,7 +4,7 @@
 #include "esp_wifi.h"
 
 #ifndef ARCANET_DEBUG
-#define ARCANET_DEBUG 0
+#define ARCANET_DEBUG 1
 #endif
 
 #if ARCANET_DEBUG
@@ -119,13 +119,18 @@ void Arcanet::sendCommand(const String& id, const String& command) {
     msg.msgUID = rand64();
     msg.hopCount = 0;
 
-    for (int i = 0; i < _peerCount; i++) {
-        esp_err_t err = esp_now_send(_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-        if (err != ESP_OK) {
-            ARC_LOG("Send command, esp_now_send error : "+String(esp_err_to_name(err)));
-        }
-    }
     isDuplicateAndRemember(msg.originMac, msg.msgUID);
+    
+    for (int i = 0; i < _peerCount; i++) {
+        if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
+        // uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
+        _instance->enqueueSend(_instance->_knownPeers[i], msg, 0);
+
+        // esp_err_t err = esp_now_send(_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
+        // if (err != ESP_OK) {
+        //     ARC_LOG("Send command, esp_now_send error : "+String(esp_err_to_name(err)));
+        // }
+    }
 }
 
 void Arcanet::addPeer(const uint8_t* mac, const String& originId) {
@@ -213,7 +218,6 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
     if (info->rx_ctrl) {
         int8_t rssi = info->rx_ctrl->rssi;
         _instance->rssiPush(rssi);
-//        ARC_LOGF("Packet RSSI: last=%d dBm, best=%d dBm\n", _instance->_lastRssi, _instance->_bestRssi);
     }
 
     if (msg.type == 'D') {
@@ -227,7 +231,6 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
             return;
         }
-
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
         if (_instance->_callback) {
@@ -247,20 +250,6 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
                 if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
                 uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
                 _instance->enqueueSend(_instance->_knownPeers[i], msg, jitter);
-
-               // Skip sending back to the sender to save airtime
-               /*
-                if (sameMac(_instance->_knownPeers[i], sender_mac)) {
-                    continue;
-                }
-                if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) {
-                    continue;
-                }
-                esp_err_t err = esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-                if (err != ESP_OK) {
-                    ARC_LOG("A onDataRecv (>=5) relay esp_now_send error: "+String(esp_err_to_name(err)));
-                }
-               */
             }
         }
     }
@@ -310,17 +299,6 @@ void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, i
                 if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
                 uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
                 _instance->enqueueSend(_instance->_knownPeers[i], msg, jitter);
-                // // Skip sending back to the sender to save airtime
-                // if (sameMac(_instance->_knownPeers[i], sender_mac)) {
-                //     continue;
-                // }
-                // if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) {
-                //     continue;
-                // }
-                // esp_err_t err = esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-                // if (err != ESP_OK) {
-                //     ARC_LOG("onDataRecv <5 relay esp_now_send error: "+String(esp_err_to_name(err)));
-                // }
             }
         }
     }
@@ -435,8 +413,8 @@ void Arcanet::processSendQueue() {
 
     esp_err_t err = esp_now_send(item.mac, (const uint8_t*)&item.msg, sizeof(item.msg));
     if (err == ESP_ERR_ESPNOW_NO_MEM) {
-      ARC_LOG("ERROR HAPPENED");
-      // Leave item in queue; try again next loop tick
+      Serial.println("ERROR HAPPENED");
+      break;// Leave item in queue; try again next loop tick
     }
 
     // Pop on success or non-NOMEM failure (optional: you can handle other errors differently)
@@ -445,9 +423,13 @@ void Arcanet::processSendQueue() {
     _sqCount--;
     taskEXIT_CRITICAL(&s_sqMux);
 
-    _lastSendMs = millis();
-    sent++;
     now = millis();
+    _lastSendMs = now;
+    sent++;
+
+    if (sent < ARCANET_MAX_SENDS_PER_LOOP) {
+        delay(1);
+    }
 
   }
 }

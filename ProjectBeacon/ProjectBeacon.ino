@@ -110,7 +110,7 @@ void loop() {
     now = millis();
 
     arcanet.loop();//housekeeping our presence in Arcanet
-readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+//readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
