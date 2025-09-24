@@ -347,15 +347,15 @@ void loop() {
       //Run through the different lights with a small delay in between them
       if (L1 == true) {
         arcanet.sendCommand(L1ID, command);
-        delay(500);
+        serviceFor(500);
       }
       if (L2 == true) {
         arcanet.sendCommand(L2ID, command);
-        delay(500);
+        serviceFor(500);
       }
       if (L3 == true) {
         arcanet.sendCommand(L3ID, command);
-        delay(500);
+        serviceFor(500);
       }
       Serial.print("Pot 1 :: ");
       Serial.print(LocDial1);
@@ -393,25 +393,37 @@ void loop() {
   }
 }
 
+void serviceFor(uint32_t ms) {
+    uint32_t start = millis();
+    while (millis() - start < ms) {
+        now = millis();
+        arcanet.loop();            // processes discovery + queue
+        // blink();
+        // sendUpdate();
+        // updateControllers();
+        delay(1);                  // yield
+    }
+}
+
 void GolemEntry() {
   GolemAction = true;
   arcanet.sendCommand("LUXALL", "WHITE_ON");
-  delay(500);
+  serviceFor(500);
   arcanet.sendCommand("MUSIC145", "PLAYGOLEMIN");
-  delay(500);
+  serviceFor(500);
   for (int i = 0; i < 22; i++) {
     arcanet.sendCommand("LUXALL", "RED_ON");
-    delay(1000);
+    serviceFor(1000);
     arcanet.sendCommand("LUXALL", "BLACK_ON");
-    delay(1000);
+    serviceFor(1000);
     Serial.print("Round 1 - ");
     Serial.println(i);
   }
   for (int i = 0; i < 8; i++) {
     arcanet.sendCommand("LUXALL", "PURPLE_ON");
-    delay(750);
+    serviceFor(750);
     arcanet.sendCommand("LUXALL", "BLACK_ON");
-    delay(750);
+    serviceFor(750);
     Serial.print("Round 2 - ");
     Serial.println(i);
   }
@@ -423,6 +435,6 @@ void GolemExit() {
   GolemAction = true;
   arcanet.sendCommand("LUXALL", "WHITE_ON");
   arcanet.sendCommand("MUSIC145", "PLAYGOLEMOUT");
-  delay(500);
+  serviceFor(500);
   GolemAction = false;
 }

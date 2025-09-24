@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LUX3";
+const String MY_ID = "LUX4";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE      = 2;   //D1 PT4115 DIM WHITE
@@ -71,7 +71,7 @@ float parseHueFromCommand(const String& command) {
 void onCommandReceived(const String& id, const String& command) {
 //  Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
 
-    if (id == MY_ID) {
+    if (id == MY_ID || id == "LUXALL") {
         if (command == "WHITE_ON") {
             relicStatus.w = 0.5;
         } else if (command == "WHITE_OFF") {

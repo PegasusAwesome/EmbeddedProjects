@@ -218,7 +218,6 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
     if (info->rx_ctrl) {
         int8_t rssi = info->rx_ctrl->rssi;
         _instance->rssiPush(rssi);
-//        ARC_LOGF("Packet RSSI: last=%d dBm, best=%d dBm\n", _instance->_lastRssi, _instance->_bestRssi);
     }
 
     if (msg.type == 'D') {
@@ -232,7 +231,6 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         if (_instance->isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
             return;
         }
-
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
         if (_instance->_callback) {
@@ -249,26 +247,9 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
             msg.hopCount++;
             for (int i = 0; i < _instance->_peerCount; i++) {
                 if (sameMac(_instance->_knownPeers[i], sender_mac)) continue;
-
                 if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
-
                 uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
-
                 _instance->enqueueSend(_instance->_knownPeers[i], msg, jitter);
-
-               // Skip sending back to the sender to save airtime
-               /*
-                if (sameMac(_instance->_knownPeers[i], sender_mac)) {
-                    continue;
-                }
-                if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) {
-                    continue;
-                }
-                esp_err_t err = esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-                if (err != ESP_OK) {
-                    ARC_LOG("A onDataRecv (>=5) relay esp_now_send error: "+String(esp_err_to_name(err)));
-                }
-               */
             }
         }
     }
@@ -318,17 +299,6 @@ void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, i
                 if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
                 uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
                 _instance->enqueueSend(_instance->_knownPeers[i], msg, jitter);
-                // // Skip sending back to the sender to save airtime
-                // if (sameMac(_instance->_knownPeers[i], sender_mac)) {
-                //     continue;
-                // }
-                // if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) {
-                //     continue;
-                // }
-                // esp_err_t err = esp_now_send(_instance->_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
-                // if (err != ESP_OK) {
-                //     ARC_LOG("onDataRecv <5 relay esp_now_send error: "+String(esp_err_to_name(err)));
-                // }
             }
         }
     }

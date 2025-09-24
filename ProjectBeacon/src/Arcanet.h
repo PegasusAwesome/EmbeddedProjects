@@ -65,6 +65,8 @@ public:
   // Use a signed integer return type to avoid unsigned wrap-around.
   static int getBestRssi();
 
+  void processSendQueue();
+
 
 private:
   // Message structure (packed to minimize airtime and avoid padding issues)
@@ -96,7 +98,6 @@ private:
 
   // Queue API
   bool enqueueSend(const uint8_t* mac, const struct_message &msg, uint32_t jitterMs = 0);
-  void processSendQueue();
 
 
   //***** Peer management *****

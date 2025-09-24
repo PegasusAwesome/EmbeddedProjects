@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN21";
+const String MY_ID = "LANTERN17";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -32,7 +32,7 @@ uint32_t now            = millis();
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& msg) {
-    if (id == MY_ID) {
+    if (id == MY_ID || id == "LANTERNALL") {
         if (msg == "LANTERN_ON") {
             digitalWrite(PIN_LANTERN, HIGH);
             relicStatus = true;
@@ -50,25 +50,6 @@ void onCommandReceived(const String& id, const String& msg) {
             prepareUpdateNow();
 
         }
-    } else if (id == "LANTERNALL") {
-        if (msg == "LANTERN_ON") {
-            digitalWrite(PIN_LANTERN, HIGH);
-            relicStatus = true;
-            prepareUpdateNow();
-
-        } else if (msg == "LANTERN_OFF") {
-            digitalWrite(PIN_LANTERN, LOW);
-            relicStatus = false;
-            prepareUpdateNow();
-
-        } else if (msg == "POWER_OFF") {
-            digitalWrite(PIN_POWER, LOW);
-
-        } else if (msg == "SEND_UPDATE") {
-            prepareUpdateNow();
-
-        }
-
     } else if (id == "ALL") {
         if (msg == "SEND_UPDATE") {
             prepareUpdateNow();
@@ -124,29 +105,80 @@ void setup() {
 
 }
 
+
 void loop() {
     now = millis();
 
     arcanet.loop();//housekeeping our presence in Arcanet
-//    readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+//readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
 
 //    demoLux();
-
-    delay(1);
+//    GolemEntry();
+//    serviceFor(10);
 }
 
-void demoLux() {
-    if ( now > tDemoLux + tDemoLuxPeriod) {
-        arcanet.sendCommand("LUX2", "SET_HUE_"+String(hue));
-        arcanet.sendCommand("LUX3", "SET_HUE_"+String( (hue+120)%360) );
-        arcanet.sendCommand("LUX4", "SET_HUE_"+String( (hue+240)%360) );
-        tDemoLux = now;
-        hue = hue>=360 ? 0 : hue+1;
+void serviceFor(uint32_t ms) {
+    uint32_t start = millis();
+    while (millis() - start < ms) {
+        now = millis();
+        arcanet.loop();            // processes discovery + queue
+        blink();
+        sendUpdate();
+        updateControllers();
+        delay(1);                  // yield
     }
 }
+
+
+void demoLux() {
+    // if ( now > tDemoLux + tDemoLuxPeriod) {
+    //     arcanet.sendCommand("LUX2", "SET_HUE_"+String(hue));
+    //     arcanet.sendCommand("LUX3", "SET_HUE_"+String( (hue+120)%360) );
+    //     arcanet.sendCommand("LUX4", "SET_HUE_"+String( (hue+240)%360) );
+    //     tDemoLux = now;
+    //     hue = hue>=360 ? 0 : hue+1;
+    // }
+}
+
+boolean   GolemAction = true;
+void GolemEntry() {
+  GolemAction = true;
+  arcanet.sendCommand("LUXALL", "WHITE_ON");
+  serviceFor(500);
+  arcanet.sendCommand("MUSIC145", "PLAYGOLEMIN");
+  serviceFor(500);
+  for (int i = 0; i < 22; i++) {
+    arcanet.sendCommand("LUXALL", "RED_ON");
+    serviceFor(1000);
+    arcanet.sendCommand("LUXALL", "BLACK_ON");
+    serviceFor(1000);
+    Serial.print("Round 1 - ");
+    Serial.println(i);
+  }
+  for (int i = 0; i < 8; i++) {
+    arcanet.sendCommand("LUXALL", "MAGENTA_ON");
+    serviceFor(750);
+    arcanet.sendCommand("LUXALL", "BLACK_ON");
+    serviceFor(750);
+    Serial.print("Round 2 - ");
+    Serial.println(i);
+  }
+  GolemAction = false;
+  return;
+}
+
+void GolemExit() {
+  GolemAction = true;
+  arcanet.sendCommand("LUXALL", "WHITE_ON");
+  arcanet.sendCommand("MUSIC145", "PLAYGOLEMOUT");
+  serviceFor(500);
+  GolemAction = false;
+}
+
+
 
 void updateControllers() {
     if ( now > updateScheduledAt + tUpdatePeriod) {

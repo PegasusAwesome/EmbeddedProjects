@@ -70,13 +70,13 @@ private:
   // Message structure (packed to minimize airtime and avoid padding issues)
   struct __attribute__((packed)) struct_message {
     char type;              // 'D' = discovery, 'C' = command
-    char id[32];            // target id (for commands)
-    char originId[28];      // originator id
-    char command[128];      // command payload
+    char id[32];            // target id (for commands) => 24?
+    char originId[28];      // originator id            => 24?
+    char command[128];      // command payload          => 64?
     uint8_t originMac[6];   // originator MAC
     uint8_t mac[6];         // last-hop MAC
-    uint64_t msgUID;        // 64-bit unique id
-    int32_t hopCount;       // hop counter
+    uint64_t msgUID;        // 64-bit unique id         => include timestamp or go back to 32 bits
+    int32_t hopCount;       // hop counter              => uint 8 !
   };
 
 
