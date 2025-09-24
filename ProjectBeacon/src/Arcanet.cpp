@@ -123,8 +123,8 @@ void Arcanet::sendCommand(const String& id, const String& command) {
     
     for (int i = 0; i < _peerCount; i++) {
         if (sameMac(_instance->_knownPeers[i], _instance->_myMac)) continue;
-        uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
-        _instance->enqueueSend(_instance->_knownPeers[i], msg, jitter);
+        // uint32_t jitter = esp_random() % 5; // 0–4 ms to de-sync relays
+        _instance->enqueueSend(_instance->_knownPeers[i], msg, 0);
 
         // esp_err_t err = esp_now_send(_knownPeers[i], (uint8_t *) &msg, sizeof(msg));
         // if (err != ESP_OK) {
@@ -423,9 +423,13 @@ void Arcanet::processSendQueue() {
     _sqCount--;
     taskEXIT_CRITICAL(&s_sqMux);
 
-    _lastSendMs = millis();
-    sent++;
     now = millis();
+    _lastSendMs = now;
+    sent++;
+
+    if (sent < ARCANET_MAX_SENDS_PER_LOOP) {
+        delay(1);
+    }
 
   }
 }

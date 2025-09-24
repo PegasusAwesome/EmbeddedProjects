@@ -110,14 +110,14 @@ void loop() {
     now = millis();
 
     arcanet.loop();//housekeeping our presence in Arcanet
-//readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
 
 //    demoLux();
 //    GolemEntry();
-//    serviceFor(10);
+    serviceFor(10);
 }
 
 void serviceFor(uint32_t ms) {
@@ -147,22 +147,22 @@ boolean   GolemAction = true;
 void GolemEntry() {
   GolemAction = true;
   arcanet.sendCommand("LUXALL", "WHITE_ON");
-  serviceFor(500);
+  serviceFor(250);
   arcanet.sendCommand("MUSIC145", "PLAYGOLEMIN");
-  serviceFor(500);
+  serviceFor(250);
   for (int i = 0; i < 22; i++) {
     arcanet.sendCommand("LUXALL", "RED_ON");
-    serviceFor(1000);
+    serviceFor(100);
     arcanet.sendCommand("LUXALL", "BLACK_ON");
-    serviceFor(1000);
+    serviceFor(100);
     Serial.print("Round 1 - ");
     Serial.println(i);
   }
   for (int i = 0; i < 8; i++) {
     arcanet.sendCommand("LUXALL", "MAGENTA_ON");
-    serviceFor(750);
+    serviceFor(250);
     arcanet.sendCommand("LUXALL", "BLACK_ON");
-    serviceFor(750);
+    serviceFor(250);
     Serial.print("Round 2 - ");
     Serial.println(i);
   }
