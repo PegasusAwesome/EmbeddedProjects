@@ -382,7 +382,7 @@ bool Arcanet::enqueueSend(const uint8_t* mac, const struct_message &msg, uint32_
   slot.notBeforeMs = millis() + jitterMs;
 
   _sqHead = (uint16_t)((_sqHead + 1) % ARCANET_SEND_QUEUE_SIZE);
-  _sqCount++;
+  _sqCount++; 
   taskEXIT_CRITICAL(&s_sqMux);
   return true;
 }
@@ -414,6 +414,7 @@ void Arcanet::processSendQueue() {
     esp_err_t err = esp_now_send(item.mac, (const uint8_t*)&item.msg, sizeof(item.msg));
     if (err == ESP_ERR_ESPNOW_NO_MEM) {
       Serial.println("ERROR HAPPENED");
+      break;
       // Leave item in queue; try again next loop tick
     }
 
