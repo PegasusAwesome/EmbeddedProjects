@@ -37,23 +37,41 @@ void loop() {
   // Run the Arcanet loop
   arcanet.loop();
 
-  // Example of sending a command from Serial input
-  if (Serial.available() > 0) {
-    String input = Serial.readStringUntil('\n');
-    input.trim();
-    int separator = input.indexOf('_');
-    if (separator > 0) {
-      String id = input.substring(0, separator);
-      String cmd = input.substring(separator + 1);
+  readSerial();
 
-      if (id == MY_ID) {
-        Serial.println("handle command");
-        onCommandReceived(id, cmd);
-      }
-
-      arcanet.sendCommand(id, cmd);
-    }
-  }
   delay(100);
 
 }
+
+
+//if somewhere in your code you have long delays (>10ms), please use serviceFor in stead of delay
+void serviceFor(uint32_t ms) {
+    uint32_t start = millis();
+    while (millis() - start < ms) {
+        readSerial();
+        arcanet.loop();            // processes discovery + queue
+        delay(1);                  // yield
+    }
+}
+
+void readSerial() {
+    if (Serial.available() > 0) {
+        String input = Serial.readStringUntil('\n');
+        input.trim();
+        int separator = input.indexOf('_');
+        if (separator > 0) {
+            String id = input.substring(0, separator);
+            String cmd = input.substring(separator + 1);
+
+            if (id == MY_ID) {
+                Serial.println("handle command");
+                onCommandReceived(id, cmd);
+            }
+
+            arcanet.sendCommand(id, cmd);
+        }
+    }
+}
+
+
+

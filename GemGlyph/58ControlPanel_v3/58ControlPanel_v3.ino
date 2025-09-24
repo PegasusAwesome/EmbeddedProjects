@@ -200,33 +200,29 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Going to boot up Arcanet");
   arcanet.init();
-  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);  //disable bluetooth
+//  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);  //disable bluetooth
 
-  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);  //Update later to WS2815
-  FastLED.setBrightness(102);                             //40% test whether more or less is needed
 
-  fill_solid(leds, NUM_LEDS, CRGB::Green);
-  FastLED.show();
   delay(3000);
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
-  FastLED.show();
+//   fill_solid(leds, NUM_LEDS, CRGB::Black);
+//   FastLED.show();
 
-  // configure encoder pins as inputs
-  pinMode(CLK1_PIN, INPUT);
-  pinMode(DT1_PIN, INPUT);
-  pinMode(CLK2_PIN, INPUT);
-  pinMode(DT2_PIN, INPUT);
-  pinMode(CLK3_PIN, INPUT);
-  pinMode(DT3_PIN, INPUT);
+//   // configure encoder pins as inputs
+//   pinMode(CLK1_PIN, INPUT);
+//   pinMode(DT1_PIN, INPUT);
+//   pinMode(CLK2_PIN, INPUT);
+//   pinMode(DT2_PIN, INPUT);
+//   pinMode(CLK3_PIN, INPUT);
+//   pinMode(DT3_PIN, INPUT);
 
-  pinMode(19, INPUT);
-  pinMode(21, OUTPUT);
+//   pinMode(19, INPUT);
+//   pinMode(21, OUTPUT);
 
-  // use interrupt for CLK pin is enough
-  // call ISR_encoder() when CLK pin changes from LOW to HIGH
-  attachInterrupt(digitalPinToInterrupt(CLK1_PIN), ISR_encoder, RISING);
-  attachInterrupt(digitalPinToInterrupt(CLK2_PIN), ISR_encoder, RISING);
-  attachInterrupt(digitalPinToInterrupt(CLK3_PIN), ISR_encoder, RISING);
+//   // use interrupt for CLK pin is enough
+//   // call ISR_encoder() when CLK pin changes from LOW to HIGH
+//   attachInterrupt(digitalPinToInterrupt(CLK1_PIN), ISR_encoder, RISING);
+//   attachInterrupt(digitalPinToInterrupt(CLK2_PIN), ISR_encoder, RISING);
+//   attachInterrupt(digitalPinToInterrupt(CLK3_PIN), ISR_encoder, RISING);
 }
 
 void loop() {
@@ -234,22 +230,22 @@ void loop() {
   arcanet.loop();
 
   //Check on the status of the whole machine to decide to activate or not
-  ConsoleSecure = digitalRead(19);  //Smeltveiligheid and Kristalschakelaar
-  if (ConsoleSecure == true && ConsoleSleep == false) {
-    ConsoleState = true;
-  } else {
-    ConsoleState = false;
-  }
-  if (ConsoleState != ConsoleStatePrev && ConsoleStatePrev == true) {
-    fill_solid(leds, NUM_LEDS, CRGB::Black);
-    FastLED.show();
-    arcanet.sendCommand("LUXALL", "BLACK_ON");
-    digitalWrite(21, LOW);
-  }
-  if (ConsoleState != ConsoleStatePrev && ConsoleStatePrev == false) {
-    digitalWrite(21, HIGH);
-  }
-  ConsoleStatePrev = ConsoleState;
+//   ConsoleSecure = digitalRead(19);  //Smeltveiligheid and Kristalschakelaar
+//   if (ConsoleSecure == true && ConsoleSleep == false) {
+//     ConsoleState = true;
+//   } else {
+//     ConsoleState = false;
+//   }
+//   if (ConsoleState != ConsoleStatePrev && ConsoleStatePrev == true) {
+//     fill_solid(leds, NUM_LEDS, CRGB::Black);
+//     FastLED.show();
+//     arcanet.sendCommand("LUXALL", "BLACK_ON");
+//     digitalWrite(21, LOW);
+//   }
+//   if (ConsoleState != ConsoleStatePrev && ConsoleStatePrev == false) {
+//     digitalWrite(21, HIGH);
+//   }
+//   ConsoleStatePrev = ConsoleState;
 
 //SLEEP checker
 
@@ -257,174 +253,174 @@ void loop() {
 
 
   if (ConsoleState == 0) {
-    Serial.println("Waiting for activation");
-    Serial.flush();
+//    Serial.println("Waiting for activation");
+//    Serial.flush();
     serviceFor(2000);
   } else {
-    //Starting with the continuous reading of the sensors
-    //Rotary encoder run over the interrupt defined above
-    LocDial1 = analogRead(LOC1_PIN);
-    LocDial2 = analogRead(LOC2_PIN);
-    // Case function for the dials -
-    Loc1 = map(LocDial1, 0, 4096, 1, 4);  // Dial 1 has 3 options
-    Loc2 = map(LocDial2, 0, 4096, 1, 8);  // Dial 2 has 7 options
+    // //Starting with the continuous reading of the sensors
+    // //Rotary encoder run over the interrupt defined above
+    // LocDial1 = analogRead(LOC1_PIN);
+    // LocDial2 = analogRead(LOC2_PIN);
+    // // Case function for the dials -
+    // Loc1 = map(LocDial1, 0, 4096, 1, 4);  // Dial 1 has 3 options
+    // Loc2 = map(LocDial2, 0, 4096, 1, 8);  // Dial 2 has 7 options
 
-    //CODE voor de bitmaps en welke lampen aan te sturen
-    uint8_t mask = getLampMask(Loc2, Loc1);
-    L1 = (mask & 0b001) ? true : false;
-    L2 = (mask & 0b010) ? true : false;
-    L3 = (mask & 0b100) ? true : false;
-    //if (mask & 0b010) L2 = true;
+    // //CODE voor de bitmaps en welke lampen aan te sturen
+    // uint8_t mask = getLampMask(Loc2, Loc1);
+    // L1 = (mask & 0b001) ? true : false;
+    // L2 = (mask & 0b010) ? true : false;
+    // L3 = (mask & 0b100) ? true : false;
+    // //if (mask & 0b010) L2 = true;
 
 
-    //Hier moet de gemapte kleur bepaald worden -- Dubbel check op band ranges - nu alleen erboven!
-    rgb = CRGB(CRED, CGREEN, CBLUE);
-    hsv = rgb2hsv_approximate(rgb);
+    // //Hier moet de gemapte kleur bepaald worden -- Dubbel check op band ranges - nu alleen erboven!
+    // rgb = CRGB(CRED, CGREEN, CBLUE);
+    // hsv = rgb2hsv_approximate(rgb);
 
-    uint8_t inputHue = hsv.h;
+    // uint8_t inputHue = hsv.h;
 
-    if (inputHue >= 240) {
-      roundedHue = HUE_RED;
-      hueName = "RED";
-    } else if (inputHue >= 208) {
-      roundedHue = HUE_PINK;
-      hueName = "PINK";
-    } else if (inputHue >= 176) {
-      roundedHue = HUE_PURPLE;
-      hueName = "PURPLE";
-    } else if (inputHue >= 144) {
-      roundedHue = HUE_BLUE;
-      hueName = "BLUE";
-    } else if (inputHue >= 112) {
-      roundedHue = HUE_AQUA;
-      hueName = "AQUA";
-    } else if (inputHue >= 80) {
-      roundedHue = HUE_GREEN;
-      hueName = "GREEN";
-    } else if (inputHue >= 48) {
-      roundedHue = HUE_YELLOW;
-      hueName = "YELLOW";
-    } else if (inputHue >= 16) {
-      roundedHue = HUE_ORANGE;
-      hueName = "ORANGE";
-    } else {
-      roundedHue = HUE_RED;
-      hueName = "RED";
-    }
+    // if (inputHue >= 240) {
+    //   roundedHue = HUE_RED;
+    //   hueName = "RED";
+    // } else if (inputHue >= 208) {
+    //   roundedHue = HUE_PINK;
+    //   hueName = "PINK";
+    // } else if (inputHue >= 176) {
+    //   roundedHue = HUE_PURPLE;
+    //   hueName = "PURPLE";
+    // } else if (inputHue >= 144) {
+    //   roundedHue = HUE_BLUE;
+    //   hueName = "BLUE";
+    // } else if (inputHue >= 112) {
+    //   roundedHue = HUE_AQUA;
+    //   hueName = "AQUA";
+    // } else if (inputHue >= 80) {
+    //   roundedHue = HUE_GREEN;
+    //   hueName = "GREEN";
+    // } else if (inputHue >= 48) {
+    //   roundedHue = HUE_YELLOW;
+    //   hueName = "YELLOW";
+    // } else if (inputHue >= 16) {
+    //   roundedHue = HUE_ORANGE;
+    //   hueName = "ORANGE";
+    // } else {
+    //   roundedHue = HUE_RED;
+    //   hueName = "RED";
+    // }
 
-    if (roundedHue != prev_roundedHue) {
-      Serial.print("Old color: ");
-      Serial.println(prev_roundedHue);
-      Serial.print("New color: ");
-      Serial.print(roundedHue);
-      Serial.println(hueName);
-      prev_roundedHue = roundedHue;
-    }
+    // if (roundedHue != prev_roundedHue) {
+    //   Serial.print("Old color: ");
+    //   Serial.println(prev_roundedHue);
+    //   Serial.print("New color: ");
+    //   Serial.print(roundedHue);
+    //   Serial.println(hueName);
+    //   prev_roundedHue = roundedHue;
+    // }
 
-    // Alle output hieronder - Voor nu als debug, kan later verdwijnen of comment worden
-    if (Debug == true) {
-      if (prev_CRED != CRED) {
-        Serial.print("Rotary Encoder 1:: direction: ");
-        if (direction1 == DIRECTION_CW)
-          Serial.print("CLOCKWISE");
-        else
-          Serial.print("ANTICLOCKWISE");
+    // // Alle output hieronder - Voor nu als debug, kan later verdwijnen of comment worden
+    // if (Debug == true) {
+    //   if (prev_CRED != CRED) {
+    //     Serial.print("Rotary Encoder 1:: direction: ");
+    //     if (direction1 == DIRECTION_CW)
+    //       Serial.print("CLOCKWISE");
+    //     else
+    //       Serial.print("ANTICLOCKWISE");
 
-        Serial.print(" - color: ");
-        Serial.println(CRED);
+    //     Serial.print(" - color: ");
+    //     Serial.println(CRED);
 
-        prev_CRED = CRED;
-      }
-      if (prev_CGREEN != CGREEN) {
-        Serial.print("Rotary Encoder2:: direction: ");
-        if (direction2 == DIRECTION_CW)
-          Serial.print("CLOCKWISE");
-        else
-          Serial.print("ANTICLOCKWISE");
+    //     prev_CRED = CRED;
+    //   }
+    //   if (prev_CGREEN != CGREEN) {
+    //     Serial.print("Rotary Encoder2:: direction: ");
+    //     if (direction2 == DIRECTION_CW)
+    //       Serial.print("CLOCKWISE");
+    //     else
+    //       Serial.print("ANTICLOCKWISE");
 
-        Serial.print(" - count: ");
-        Serial.println(CGREEN);
+    //     Serial.print(" - count: ");
+    //     Serial.println(CGREEN);
 
-        prev_CGREEN = CGREEN;
-      }
-      if (prev_CBLUE != CBLUE) {
-        Serial.print("Rotary Encoder3:: direction: ");
-        if (direction3 == DIRECTION_CW)
-          Serial.print("CLOCKWISE");
-        else
-          Serial.print("ANTICLOCKWISE");
+    //     prev_CGREEN = CGREEN;
+    //   }
+    //   if (prev_CBLUE != CBLUE) {
+    //     Serial.print("Rotary Encoder3:: direction: ");
+    //     if (direction3 == DIRECTION_CW)
+    //       Serial.print("CLOCKWISE");
+    //     else
+    //       Serial.print("ANTICLOCKWISE");
 
-        Serial.print(" - count: ");
-        Serial.println(CBLUE);
+    //     Serial.print(" - count: ");
+    //     Serial.println(CBLUE);
 
-        prev_CBLUE = CBLUE;
-      }
-    }
+    //     prev_CBLUE = CBLUE;
+    //   }
+    // }
 
-    //Setting the dial indicators
-    unsigned long currentTime = millis();
-    if (currentTime - lastLEDTime >= LEDInterval) {
-      FastLED.clear();
-      int ledred = map(CRED, 0, 256, 0, 19);
-      int ledgreen = map(CGREEN, 0, 256, 0, 12);
-      int ledblue = map(CBLUE, 0, 256, 0, 19);
-      fill_solid(leds, ledred, CRGB::Purple);                          //Fill the first 18 based on red dial
-      fill_solid(leds + 18, ledgreen, CRGB::Purple);                   //Fill the next 23 based on weird logic
-      fill_solid(leds + 18 + 23, ledblue, CRGB::Purple);               //Fill the next 18 based on blue dial
-      fill_solid(leds + 18 + 23 + 18, 18, CRGB(CRED, CGREEN, CBLUE));  //Fill the crystal on top with the actual color --> Needs updating to selected 8
-      FastLED.show();
+    // //Setting the dial indicators
+    // unsigned long currentTime = millis();
+    // if (currentTime - lastLEDTime >= LEDInterval) {
+    //   FastLED.clear();
+    //   int ledred = map(CRED, 0, 256, 0, 19);
+    //   int ledgreen = map(CGREEN, 0, 256, 0, 12);
+    //   int ledblue = map(CBLUE, 0, 256, 0, 19);
+    //   fill_solid(leds, ledred, CRGB::Purple);                          //Fill the first 18 based on red dial
+    //   fill_solid(leds + 18, ledgreen, CRGB::Purple);                   //Fill the next 23 based on weird logic
+    //   fill_solid(leds + 18 + 23, ledblue, CRGB::Purple);               //Fill the next 18 based on blue dial
+    //   fill_solid(leds + 18 + 23 + 18, 18, CRGB(CRED, CGREEN, CBLUE));  //Fill the crystal on top with the actual color --> Needs updating to selected 8
+    //   FastLED.show();
 
-      //Temporary code below
-      FastLED.clear();
-      for (int led = 0; led < 3; led++) {
-        leds[led] = CRGB(CRED, CGREEN, CBLUE);
-      }
-      leds[3] = CRGB::Black;
-      leds[4] = CHSV(roundedHue, 255, 255);
-      FastLED.show();
-    }
+    //   //Temporary code below
+    //   FastLED.clear();
+    //   for (int led = 0; led < 3; led++) {
+    //     leds[led] = CRGB(CRED, CGREEN, CBLUE);
+    //   }
+    //   leds[3] = CRGB::Black;
+    //   leds[4] = CHSV(roundedHue, 255, 255);
+    //   FastLED.show();
+    // }
 
-    //Regularly broadcasting data if lamps are on
-    if (GolemAction != true) {
-      if (currentTime - lastBroadcastTime >= broadcastInterval) {
-        lastBroadcastTime = currentTime;
-        String command(roundedHue);
-        //Run through the different lights with a small delay in between them
-        if (L1 == true) {
-          arcanet.sendCommand(L1ID, command);
-          serviceFor(500);
-        }
-        if (L2 == true) {
-          arcanet.sendCommand(L2ID, command);
-          serviceFor(500);
-        }
-        if (L3 == true) {
-          arcanet.sendCommand(L3ID, command);
-          serviceFor(500);
-        }
-        if (Debug == true) {
-          Serial.print("Pot 1 :: ");
-          Serial.print(LocDial1);
-          Serial.print(" :: ");
-          Serial.println(Loc1);
-          Serial.print("Pot 2 :: ");
-          Serial.print(LocDial2);
-          Serial.print(" :: ");
-          Serial.println(Loc2);
-          debugMask(mask);  //To be removed later
-          Serial.print("Current color - ");
-          Serial.print(roundedHue);
-          Serial.print(" - ");
-          Serial.println(hueName);
-          Serial.print("Console Sleep: ");
-          Serial.println(ConsoleSleep);
-          Serial.print("Console Secure: ");
-          Serial.println(ConsoleSecure);
-          Serial.print("Console State: ");
-          Serial.println(ConsoleState);
-        }
-      }
-    }
+    // //Regularly broadcasting data if lamps are on
+    // if (GolemAction != true) {
+    //   if (currentTime - lastBroadcastTime >= broadcastInterval) {
+    //     lastBroadcastTime = currentTime;
+    //     String command(roundedHue);
+    //     //Run through the different lights with a small delay in between them
+    //     if (L1 == true) {
+    //       arcanet.sendCommand(L1ID, command);
+    //       serviceFor(500);
+    //     }
+    //     if (L2 == true) {
+    //       arcanet.sendCommand(L2ID, command);
+    //       serviceFor(500);
+    //     }
+    //     if (L3 == true) {
+    //       arcanet.sendCommand(L3ID, command);
+    //       serviceFor(500);
+    //     }
+    //     if (Debug == true) {
+    //       Serial.print("Pot 1 :: ");
+    //       Serial.print(LocDial1);
+    //       Serial.print(" :: ");
+    //       Serial.println(Loc1);
+    //       Serial.print("Pot 2 :: ");
+    //       Serial.print(LocDial2);
+    //       Serial.print(" :: ");
+    //       Serial.println(Loc2);
+    //       debugMask(mask);  //To be removed later
+    //       Serial.print("Current color - ");
+    //       Serial.print(roundedHue);
+    //       Serial.print(" - ");
+    //       Serial.println(hueName);
+    //       Serial.print("Console Sleep: ");
+    //       Serial.println(ConsoleSleep);
+    //       Serial.print("Console Secure: ");
+    //       Serial.println(ConsoleSecure);
+    //       Serial.print("Console State: ");
+    //       Serial.println(ConsoleState);
+    //     }
+    //   }
+    // }
   }
 
 

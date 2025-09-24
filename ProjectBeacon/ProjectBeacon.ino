@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN17";
+const String MY_ID = "LANTERN21";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -117,7 +117,7 @@ void loop() {
 
 //    demoLux();
 //    GolemEntry();
-    serviceFor(10);
+//    serviceFor(10);
 }
 
 void serviceFor(uint32_t ms) {
