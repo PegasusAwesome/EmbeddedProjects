@@ -99,6 +99,8 @@ extern void ui_event_Lux4Icon(lv_event_t * e);
 extern lv_obj_t * ui_Lux4Icon;
 extern void ui_event_Colorwheel4(lv_event_t * e);
 extern lv_obj_t * ui_Colorwheel4;
+extern void ui_event_EasterButton(lv_event_t * e);
+extern lv_obj_t * ui_EasterButton;
 extern lv_obj_t * ui_GemGlyph71Button;
 extern lv_obj_t * ui_GemGlyph71Label;
 extern lv_obj_t * ui_GemGlyph71Icon;
@@ -108,6 +110,9 @@ extern lv_obj_t * ui_GemGlyph71InButtonLabel;
 extern void ui_event_GemGlyph71OutButton(lv_event_t * e);
 extern lv_obj_t * ui_GemGlyph71OutButton;
 extern lv_obj_t * ui_GemGlyph71OutButtonLabel;
+extern void ui_event_EggButton(lv_event_t * e);
+extern lv_obj_t * ui_EggButton;
+extern lv_obj_t * ui_EasterEggResult;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_Screen2;
 extern lv_obj_t * uic_Lantern11Button;
@@ -188,11 +193,13 @@ extern lv_obj_t * uic_Network4Icon;
 extern lv_obj_t * uic_Battery4Icon;
 extern lv_obj_t * uic_Lux4Icon;
 extern lv_obj_t * uic_Colorwheel4;
+extern lv_obj_t * uic_EasterButton;
 extern lv_obj_t * uic_GemGlyph71Button;
 extern lv_obj_t * uic_GemGlyph71Label;
 extern lv_obj_t * uic_GemGlyph71Icon;
 extern lv_obj_t * uic_GemGlyph71OutButton;
 extern lv_obj_t * uic_GemGlyph71OutButtonLabel;
+extern lv_obj_t * uic_EasterEggResult;
 
 #ifdef __cplusplus
 } /*extern "C"*/

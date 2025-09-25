@@ -6,6 +6,8 @@
 #include "ui/ui.h"
 #include "lvgl.h"
 
+#include "Quotes.h"
+
 LV_IMG_DECLARE(ui_img_wifi_disabled_png);    
 LV_IMG_DECLARE(ui_img_battery_disabled_png);   
 LV_IMG_DECLARE(ui_img_lantern_disabled_png);
@@ -35,6 +37,11 @@ LV_IMG_DECLARE(ui_img_wifi_20_40_png);
 LV_IMG_DECLARE(ui_img_wifi_40_60_png);   
 LV_IMG_DECLARE(ui_img_wifi_60_80_png);   
 LV_IMG_DECLARE(ui_img_wifi_80_100_png);  
+
+// LV_IMG_DECLARE(ui_img_golem_base_png);   
+// LV_IMG_DECLARE(ui_golem_off_png);   
+// LV_IMG_DECLARE(ui_golem_on_png);  
+
 
 // Your device's unique ID
 const String MY_ID = "HEPTAGLYPH1";//aka HG1 or HaGeen
@@ -128,6 +135,8 @@ static LuxArcana luxes[] = {
 };
 
 
+bool golemIn = false;
+
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& command) {
@@ -142,6 +151,29 @@ void onCommandReceived(const String& id, const String& command) {
 // Create an instance of the Arcanet library
 Arcanet arcanet(MY_ID, onCommandReceived);
 
+int eeCount = 0;
+
+void setEasterEgg(lv_event_t * e) {
+    eeCount++;
+    if (eeCount>=5 && eeCount<15) {
+        lv_label_set_text(uic_EasterEggResult, "...");
+    } else if (eeCount>=15 && eeCount<20) {
+        lv_label_set_text(uic_EasterEggResult, "Noeoeoes!");
+    } else if (eeCount>=20 && eeCount<30) {
+        lv_label_set_text(uic_EasterEggResult, "Why you pokin' me again?");
+
+    } else if (eeCount>=30 && eeCount<40) {
+        lv_label_set_text(uic_EasterEggResult, "Me busy! Leave me alone!");
+
+    } else if (eeCount>=40 && eeCount<140) {
+        String text = String(140-eeCount)+" little clicks left on the screen. . .";
+        lv_label_set_text(uic_EasterEggResult, text.c_str());
+
+    } else if (eeCount>=140) {
+        const char* q = FunQuotes::get_random_quote();
+        lv_label_set_text(uic_EasterEggResult, q);
+    }
+}
 
 // 3) One event handler, works for every row
 static void on_lantern_button_event(lv_event_t* e) {
@@ -210,9 +242,9 @@ void activateGolemOutSequence(lv_event_t * e) {
 
 
 void setup() {
-    delay(3000);
+    delay(500);
     Serial.begin(115200);
-    delay(3000);
+    // delay(3000);
 
     static esp_lcd_panel_handle_t panel_handle = NULL; // Declare a handle for the LCD panel
     static esp_lcd_touch_handle_t tp_handle = NULL;    // Declare a handle for the touch panel
@@ -287,17 +319,232 @@ void setup() {
 
     // Initialize the Arcanet network
     arcanet.init();
-    delay(1000);
+    delay(500);
 
-    Serial.println("##################################");
+    Serial.println("#################################");
     Serial.println("### HeptaGlyph setup complete ###");
-    Serial.println("##################################");
+    Serial.println("#################################");
     Serial.println("My ID is: "+String(MY_ID));
 }
 
 void loop() {
+    arcanet.loop();
+    checkStaleness();
     delay(1);
 
 }
 
+void checkStaleness() {
+    uint32_t now = millis();
+    if ( now>tMinStalenessTime && now>tCheckStalenessPeriod && (now - tCheckStalenessPeriod) > tLastStalenessCheck) {
+        if (lvgl_port_lock(-1)) {
+            for (auto &r : lanterns) {
+                if (r.lastUpdate < (now-tMinStalenessTime)) {
+                    lv_img_set_src(r.networkIcon, &ui_img_wifi_disabled_png);
+                    lv_img_set_src(r.batteryIcon, &ui_img_battery_disabled_png);
+                    lv_img_set_src(r.relicIcon, &ui_img_lantern_disabled_png);
 
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                } else {
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
+            }
+            for (auto &r : luxes) {
+                if (r.lastUpdate < (now-tMinStalenessTime)) {
+                    lv_img_set_src(r.networkIcon, &ui_img_wifi_disabled_png);
+                    lv_img_set_src(r.batteryIcon, &ui_img_battery_disabled_png);
+                    lv_img_set_src(r.relicIcon, &ui_img_gem_disabled_png);
+
+                    lv_obj_set_style_bg_color(r.relicIcon, lv_color_hex(0x9CA3AF), LV_PART_MAIN);//div by 0.45 because that  happens at the lux side, we should actually fix the value that is send on the lux side
+                    lv_obj_set_style_bg_opa(r.relicIcon, LV_OPA_COVER, LV_PART_MAIN);
+
+                    lv_obj_add_flag(r.wheelIcon, LV_OBJ_FLAG_HIDDEN);
+
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                } else {
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
+            }
+            lvgl_port_unlock();
+        }
+        tLastStalenessCheck = now;
+    }
+}
+
+
+// Generic lookup by string
+Lantern* findLanternByNetID(const char* id) {
+    for (auto &r : lanterns) {
+        if (strcmp(r.netID, id) == 0) {
+            return &r;
+        }
+    }
+    return nullptr;
+}
+
+// Generic lookup by string
+LuxArcana* findLuxByNetID(const char* id) {
+    for (auto &r : luxes) {
+        if (strcmp(r.netID, id) == 0) {
+            return &r;
+        }
+    }
+    return nullptr;
+}
+
+
+static const lv_img_dsc_t *pick_lantern_battery_icon(int mv) {
+    if(mv <= 3100) return &ui_img_battery_empty_png;
+    if(mv <= 3600) return &ui_img_battery_0_25_png;
+    if(mv <= 3840) return &ui_img_battery_25_50_png;
+    if(mv <= 3980) return &ui_img_battery_50_75_png;
+    return &ui_img_battery_75_100_png;
+}
+static const lv_img_dsc_t *pick_lux_battery_icon(int mv) {
+    if(mv <= 12900) return &ui_img_battery_empty_png;
+    if(mv <= 13000) return &ui_img_battery_0_25_png;
+    if(mv <= 13100) return &ui_img_battery_25_50_png;
+    if(mv <= 13200) return &ui_img_battery_50_75_png;
+    return &ui_img_battery_75_100_png;
+}
+
+static const lv_img_dsc_t *pick_wifi_icon(int rssi_dbm) {
+    if(rssi_dbm >= -40) return &ui_img_wifi_80_100_png;
+    if(rssi_dbm >= -55) return &ui_img_wifi_60_80_png;
+    if(rssi_dbm >= -70) return &ui_img_wifi_40_60_png;
+    if(rssi_dbm >= -84) return &ui_img_wifi_20_40_png;
+    return &ui_img_wifi_0_20_png;
+}
+
+static const lv_img_dsc_t *pick_lantern_icon(int on) {
+    return on ? &ui_img_lantern_on_png : &ui_img_lantern_off_png;
+}  
+
+void ui_update_lantern_status(Lantern* lantern, int batt_mv, int rssi_dbm, char* status) {
+    if (lantern && lvgl_port_lock(-1)) {
+        lv_img_set_src(lantern->networkIcon, pick_wifi_icon(rssi_dbm));
+        lv_img_set_src(lantern->batteryIcon, pick_lantern_battery_icon(batt_mv));
+
+        int on = (strcasecmp(status, "ON") == 0);
+        lv_img_set_src(lantern->relicIcon, pick_lantern_icon(on));
+        lantern->on = on;
+
+        lv_obj_set_style_bg_color(lantern->mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+        lvgl_port_unlock();
+    }
+}  
+
+int ui_apply_status_string(const char *msg) {
+
+    if(!msg) return -1;
+    char buf[128];
+    size_t n = strlen(msg);
+    if(n >= sizeof(buf)) n = sizeof(buf) - 1;
+    memcpy(buf, msg, n);
+    buf[n] = '\0';
+
+    char *id = nullptr;
+    int mv = 0;
+    int rssi = -127;
+    // int on = 0;
+    char *status1 = nullptr;
+    char *status2 = nullptr;
+    char *status3 = nullptr;
+    char *status4 = nullptr;
+
+    char *saveptr = NULL;
+    char *tok = strtok_r(buf, "_", &saveptr);
+    int field = 0;
+
+    while(tok) {
+
+        if (!id) {
+            id = tok;
+        } else if (strcmp(tok, "BLVL") == 0) {
+            char *v = strtok_r(NULL, "_", &saveptr); 
+            if(!v) break; 
+            mv = atoi(v);
+        } else if (strcmp(tok, "SGNL") == 0) {
+            char *v = strtok_r(NULL, "_", &saveptr); 
+            if(!v) break; 
+            rssi = atoi(v);
+        } else if (strcmp(tok, "STATE") == 0) {
+            status1 = strtok_r(NULL, "_", &saveptr); 
+            if(!status1) break;
+            status2 = strtok_r(NULL, "_", &saveptr); 
+            status3 = strtok_r(NULL, "_", &saveptr); 
+            status4 = strtok_r(NULL, "_", &saveptr); 
+            // on = (strcasecmp(v, "ON") == 0);
+        }
+//        char def0[] = "0";
+
+        tok = strtok_r(NULL, "_", &saveptr);
+        field++;
+    }
+    if (!status1) return -2;
+    if(!id) return -2;
+
+    String sStatus1 = String(status1);
+    Lantern* lantern = findLanternByNetID(id);
+    if (lantern) {
+        ui_update_lantern_status(lantern, mv, rssi, status1);
+        lantern->lastUpdate = millis();
+    } else if (sStatus1=="GOLEMIN") {
+        lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_on_png);
+        golemIn = true;
+    } else if (sStatus1=="GOLEMOUT") {
+        lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_on_png);
+        golemIn = false;
+    } else if (sStatus1=="GOLEMRDY") {
+        if (golemIn) {
+            lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_base_png);
+        } else {
+            lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_off_png);
+        }
+    } else {
+        if (!status2 ||!status3 || !status4) return -2;
+
+        LuxArcana* lux = findLuxByNetID(id);
+        if (lux) {
+            ui_update_lux_status(lux, mv, rssi, status1, status2, status3, status4);
+            lux->lastUpdate = millis();
+        }
+    }
+
+    return 0;
+} 
+
+void ui_update_lux_status(LuxArcana* lux, int batt_mv, int rssi_dbm, char* status1, char* status2, char* status3, char* status4) {
+    float fStatR = atof(status1);
+    float fStatG = atof(status2);
+    float fStatB = atof(status3);
+    float fStatW = atof(status4);
+
+    if (lux && lvgl_port_lock(-1)) {
+
+        lux->_rgbw.r = fStatR;
+        lux->_rgbw.g = fStatG;
+        lux->_rgbw.b = fStatB;
+        lux->_rgbw.w = fStatW;
+        uint8_t r = fStatR*255/0.45;
+        uint8_t g = fStatG*255/0.45;
+        uint8_t b = fStatB*255/0.45;
+        uint8_t w = fStatW*255/0.45;
+
+        lv_obj_set_style_bg_color(lux->mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_img_set_src(lux->relicIcon, &ui_img_gem_transparent_png);
+        lv_img_set_src(lux->networkIcon, pick_wifi_icon(rssi_dbm));
+        lv_img_set_src(lux->batteryIcon, pick_lux_battery_icon(batt_mv));
+
+        lv_color_t colorRgb = lv_color_make(r, g, b);
+        lv_colorwheel_set_rgb(lux->wheelIcon, colorRgb);
+        lv_obj_clear_flag(lux->wheelIcon, LV_OBJ_FLAG_HIDDEN);
+
+
+        lv_obj_set_style_bg_color(lux->relicIcon, colorRgb, LV_PART_MAIN);//div by 0.45 because that happens at the lux side, we should actually fix the value that is send on the lux side
+        lv_obj_set_style_bg_opa(lux->relicIcon, LV_OPA_COVER, LV_PART_MAIN);
+
+        lvgl_port_unlock();
+    }
+}  

@@ -24,5 +24,8 @@
 #include "ui/images/ui_img_gem_off_png.c"
 #include "ui/images/ui_img_gem_disabled_png.c"
 #include "ui/images/ui_img_gem_transparent_png.c"
+
 #include "ui/images/ui_img_golem_base_png.c"
+#include "ui/images/ui_img_golem_off_png.c"
+#include "ui/images/ui_img_golem_on_png.c"
 

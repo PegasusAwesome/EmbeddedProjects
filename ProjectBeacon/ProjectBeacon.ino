@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN21";
+const String MY_ID = "LANTERN17";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -110,7 +110,7 @@ void loop() {
     now = millis();
 
     arcanet.loop();//housekeeping our presence in Arcanet
-//readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
