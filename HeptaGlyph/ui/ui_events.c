@@ -42,3 +42,8 @@ void activateGolemOutSequence(lv_event_t * e)
 {
 	// Your code here
 }
+
+void setBrightness4(lv_event_t * e)
+{
+	// Your code here
+}

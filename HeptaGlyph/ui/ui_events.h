@@ -19,6 +19,7 @@ void setColorFromScreen4(lv_event_t * e);
 void setEasterEgg(lv_event_t * e);
 void activateGolemInSequence(lv_event_t * e);
 void activateGolemOutSequence(lv_event_t * e);
+void setBrightness4(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

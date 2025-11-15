@@ -222,6 +222,12 @@ void setColorFromScreen4(lv_event_t * e) {
     lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
     arcanet.sendCommand("LUX4", "SET_HUE_"+String(hsv.h));
 }
+void setBrightness4(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX4", "SET_VAL_"+String(val));
+}
+
 
 void setToBlack2(lv_event_t * e) {
     arcanet.sendCommand("LUX2", "BLACK_ON");
@@ -314,6 +320,7 @@ void setup() {
             }
         }
 
+        
         lvgl_port_unlock();
     }
 
@@ -401,10 +408,10 @@ static const lv_img_dsc_t *pick_lantern_battery_icon(int mv) {
     return &ui_img_battery_75_100_png;
 }
 static const lv_img_dsc_t *pick_lux_battery_icon(int mv) {
-    if(mv <= 12900) return &ui_img_battery_empty_png;
-    if(mv <= 13000) return &ui_img_battery_0_25_png;
+    if(mv <= 12500) return &ui_img_battery_empty_png;
+    if(mv <= 12950) return &ui_img_battery_0_25_png;
     if(mv <= 13100) return &ui_img_battery_25_50_png;
-    if(mv <= 13200) return &ui_img_battery_50_75_png;
+    if(mv <= 13250) return &ui_img_battery_50_75_png;
     return &ui_img_battery_75_100_png;
 }
 

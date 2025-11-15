@@ -5,16 +5,16 @@
 const String MY_ID = "LANTERN25";
 
 //GPIO of Popwer (N-Fet) pin
-const uint8_t PIN_POWER          = 1;
+const uint8_t PIN_POWER          = 23;
 
 //GPIO of Popwer (GPIO 0 for reading battery lvl) pin
-const uint8_t PIN_BATTERY        = 0;
+const uint8_t PIN_BATTERY        = 1;
 
 //GPIO of Lantern control pin
-const uint8_t PIN_LANTERN        = 23;
+const uint8_t PIN_LANTERN        = 22;
  
 unsigned long updateScheduledAt  = 0;
-uint32_t tUpdatePeriod = 60000;
+uint32_t tUpdatePeriod = 10000;
 boolean pendingUpdate = false;
 int minBatteryLevel = 2900;
 boolean relicStatus = false;
@@ -101,7 +101,7 @@ void setup() {
     digitalWrite(PIN_LANTERN, LOW);
 
     pendingUpdate = true;
-    updateScheduledAt = millis() + 30000;
+    updateScheduledAt = millis() + 10000;
 
 }
 
@@ -114,11 +114,10 @@ readSerial();//any commands from outside (TODO: put this behind a compile time s
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
-
+    serviceFor(10);
+}
 //    demoLux();
 //    GolemEntry();
-//    serviceFor(10);
-}
 
 void serviceFor(uint32_t ms) {
     uint32_t start = millis();
@@ -185,9 +184,9 @@ void readSerial() {
 
 void checkBatteryLevel() {
     if (getBatteryLevel()<minBatteryLevel) {
-        delay(50);
+        delay(150);
         if (getBatteryLevel()<minBatteryLevel) {
-            delay(50);
+            delay(250);
             if (getBatteryLevel()<minBatteryLevel) {
                 pinMode(PIN_POWER, OUTPUT);
                 digitalWrite(PIN_POWER, LOW);
@@ -198,7 +197,8 @@ void checkBatteryLevel() {
 
 int getBatteryLevel() {
     int mv = analogReadMilliVolts(PIN_BATTERY); 
-    mv = mv / 0.5;
+Serial.println("mv: "+String(mv));    
+    mv = mv<1 ? 1 : mv*2;
     return mv;
 }
 
