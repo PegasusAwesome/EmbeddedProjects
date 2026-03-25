@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN25";
+const String MY_ID = "LANTERN30";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 23;
