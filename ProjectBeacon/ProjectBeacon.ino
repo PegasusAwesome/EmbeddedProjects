@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN25";
+const String MY_ID = "LANTERN24";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -32,6 +32,7 @@ uint32_t now            = millis();
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& msg) {
+
     if (id == MY_ID || id == "LANTERNALL") {
         if (msg == "LANTERN_ON") {
             digitalWrite(PIN_LANTERN, HIGH);
