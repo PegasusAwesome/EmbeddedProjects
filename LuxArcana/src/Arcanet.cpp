@@ -1,7 +1,8 @@
-#include <sys/_stdint.h>
-#include "HardwareSerial.h"
+#include <stdint.h>
 #include "Arcanet.h"
 #include "esp_wifi.h"
+#include "esp_err.h"
+#include "esp_bt.h"
 
 #ifndef ARCANET_DEBUG
 #define ARCANET_DEBUG 1
@@ -17,13 +18,17 @@
 
 // Simple critical section for multi-task access
 static portMUX_TYPE s_sqMux = portMUX_INITIALIZER_UNLOCKED;
+static portMUX_TYPE s_rqMux = portMUX_INITIALIZER_UNLOCKED;
 
 static constexpr int RSSI_WINDOW = 20;
 int8_t _rssiWindow[RSSI_WINDOW];
 int _rssiCount;   // number of samples accumulated so far (<= 20)
 int _rssiHead;    // next write index, 0..19
 
+
+
 Arcanet* Arcanet::_instance = nullptr;
+
 
 Arcanet::Arcanet(String id, message_callback_t callback) {
     _id = id;
@@ -36,13 +41,16 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
     _lastRssi = -127;
     _channel = 0;
     _sqHead = _sqTail = _sqCount = 0;
+    _rqHead = _rqTail = _rqCount = 0;
     _lastSendMs = 0;
 }
 
 void Arcanet::init() {
+    static_assert(sizeof(struct_message) <= 240, "ESPNOW payload too large; shrink struct_message fields");
     // Default to channel 1 only if the user has not configured a channel
     if (_channel == 0) {
         _channel = 1;
+        ARC_LOG("We default to channel 1, if the user has not configured a channel.");
     }
 
     #if CONFIG_IDF_TARGET_ESP32S3
@@ -60,6 +68,7 @@ void Arcanet::init() {
         ARC_LOG("Build-time: UNKNOWN chip -> please verify antenna logic");
     #endif
 
+    (void)esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
     WiFi.mode(WIFI_STA);
     delay(1000);
     esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_LR);
@@ -101,6 +110,7 @@ void Arcanet::loop() {
         _lastBroadcastTime = millis();
         broadcastDiscovery();
     }
+    processRecvQueue();
     processSendQueue();
 }
 
@@ -222,7 +232,7 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
 
     if (msg.type == 'D') {
         if (!sameMac(msg.mac, _instance->_myMac)) {
-            _instance->addPeer(msg.mac, String(msg.originId));
+            _instance->addPeer(msg.mac, msg.originId);
         }
         return;
     }
@@ -234,7 +244,7 @@ void Arcanet::onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingD
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
         if (_instance->_callback) {
-            _instance->_callback(msg.id, msg.command);
+            _instance->enqueueRecv(msg.id, msg.command);
         }
 
         // Sanitize hopCount so negative values don't bypass the hop limit logic
@@ -270,7 +280,7 @@ void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, i
 
     if (msg.type == 'D') {
         if (!sameMac(msg.mac, _instance->_myMac)) {
-            _instance->addPeer(msg.mac, String(msg.originId));
+            _instance->addPeer(msg.mac, msg.originId);
         }
         return;
     }
@@ -283,7 +293,7 @@ void Arcanet::onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, i
         ARC_LOGF("Received command %s, from originId: %s, for id: %s\n", msg.command, msg.originId, msg.id);
 
         if (_instance->_callback) {
-            _instance->_callback(msg.id, msg.command);
+            _instance->enqueueRecv(msg.id, msg.command);
         }
 
         // Sanitize hopCount so negative values don't bypass the hop limit logic
@@ -413,7 +423,7 @@ void Arcanet::processSendQueue() {
 
     esp_err_t err = esp_now_send(item.mac, (const uint8_t*)&item.msg, sizeof(item.msg));
     if (err == ESP_ERR_ESPNOW_NO_MEM) {
-      Serial.println("ERROR HAPPENED");
+      ARC_LOGF("esp_now_send NO_MEM: %s (%d)\n", esp_err_to_name(err), (int)err);
       break;// Leave item in queue; try again next loop tick
     }
 
@@ -432,4 +442,58 @@ void Arcanet::processSendQueue() {
     }
 
   }
+}
+
+bool Arcanet::enqueueRecv(const char* id, const char* command) {
+  taskENTER_CRITICAL(&s_rqMux);
+  if (_rqCount >= ARCANET_RECV_QUEUE_SIZE) {
+    taskEXIT_CRITICAL(&s_rqMux);
+    return false;
+  }
+  RecvEvent &slot = _recvQ[_rqHead];
+  strncpy(slot.id, id, sizeof(slot.id));
+  slot.id[sizeof(slot.id)-1] = '\0';
+  strncpy(slot.command, command, sizeof(slot.command));
+  slot.command[sizeof(slot.command)-1] = '\0';
+  _rqHead = (uint16_t)((_rqHead + 1) % ARCANET_RECV_QUEUE_SIZE);
+  _rqCount++;
+  taskEXIT_CRITICAL(&s_rqMux);
+  return true;
+}
+
+void Arcanet::processRecvQueue() {
+  while (true) {
+    taskENTER_CRITICAL(&s_rqMux);
+    if (_rqCount == 0) {
+      taskEXIT_CRITICAL(&s_rqMux);
+      break;
+    }
+    RecvEvent ev = _recvQ[_rqTail];
+    _rqTail = (uint16_t)((_rqTail + 1) % ARCANET_RECV_QUEUE_SIZE);
+    _rqCount--;
+    taskEXIT_CRITICAL(&s_rqMux);
+
+    if (_callback) {
+      _callback(String(ev.id), String(ev.command));
+    }
+  }
+}
+
+void Arcanet::addPeer(const uint8_t* mac, const char* originId) {
+    if (_peerCount < ARCANET_MAX_PEERS && !isKnownPeer(mac)) {
+        esp_now_peer_info_t peerInfo = {};
+        memcpy(peerInfo.peer_addr, mac, 6);
+        peerInfo.channel = (_channel == 0 ? 0 : _channel);
+        peerInfo.encrypt = false;
+        esp_err_t err = esp_now_add_peer(&peerInfo);
+        if (err == ESP_OK) {
+            memcpy(_knownPeers[_peerCount], mac, 6);
+            _peerCount++;
+            ARC_LOGF("Added peer: %s\n", originId);
+        } else if (err == ESP_ERR_ESPNOW_EXIST) {
+            ARC_LOG("Peer already exists");
+        } else {
+            ARC_LOGF("Failed to add peer (err=%d)\n", (int)err);
+        }
+    }
 }
