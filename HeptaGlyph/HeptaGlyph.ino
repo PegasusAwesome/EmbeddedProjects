@@ -554,4 +554,4 @@ void ui_update_lux_status(LuxArcana* lux, int batt_mv, int rssi_dbm, char* statu
 
         lvgl_port_unlock();
     }
-}  
+}

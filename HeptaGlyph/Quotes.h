@@ -80,7 +80,7 @@ inline constexpr const char* QUOTES[] = {
     "Astounding. Really.",
     "Do carry on. I'll just be here. Forever.",
 
-    "De godenwereld van Elerion is gebaseerd op de tv-serie 'De Familie Knots. Hansje=Zon, Neef Herbert=JHK, Oma&Opa=AlMoeder&AlVader en het echt grote geheim is dat oh shit, wegwezen, Johan mag dit niet zien!' "
+    "De godenwereld van Elerion is gebaseerd op de tv-serie 'De Familie Knots.' Hansje=Zon, Neef Herbert=JHK, Oma&Opa=AlMoeder&AlVader en het echt grote geheim is dat oh shit, wegwezen, Johan mag dit niet zien!"
 
     // Longer Marvin-esque
     "Here we go again. Another click. My circuits ache with boredom.",
