@@ -11,7 +11,7 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 // Default compile-time configuration values
 // You can override these by defining them before including this header
 #ifndef ARCANET_MAX_PEERS
-#define ARCANET_MAX_PEERS 40
+#define ARCANET_MAX_PEERS 30
 #endif
 
 #ifndef ARCANET_DEDUPE_SIZE
@@ -19,7 +19,7 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 #endif
 
 #ifndef ARCANET_DISCOVERY_INTERVAL_MS
-#define ARCANET_DISCOVERY_INTERVAL_MS 10000UL
+#define ARCANET_DISCOVERY_INTERVAL_MS 15000UL
 #endif
 
 #ifndef ARCANET_MAX_HOPS
@@ -27,16 +27,21 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 #endif
 
 #ifndef ARCANET_SEND_QUEUE_SIZE
-#define ARCANET_SEND_QUEUE_SIZE 32
+#define ARCANET_SEND_QUEUE_SIZE 16
 #endif
 
 #ifndef ARCANET_MAX_SENDS_PER_LOOP
-#define ARCANET_MAX_SENDS_PER_LOOP 6
+#define ARCANET_MAX_SENDS_PER_LOOP 3
 #endif
 
 #ifndef ARCANET_MIN_SEND_GAP_MS
-#define ARCANET_MIN_SEND_GAP_MS 2
+#define ARCANET_MIN_SEND_GAP_MS 7
 #endif
+
+#ifndef ARCANET_RECV_QUEUE_SIZE
+#define ARCANET_RECV_QUEUE_SIZE 16
+#endif
+
 
 
 
@@ -58,9 +63,6 @@ public:
   // Configuration
   void setChannel(uint8_t channel); // 0 = current channel (default), 1..14 = fixed channel
 
-  // Register a specific handler for an exact command string (optional QoL)
-  bool registerCommand(const String& command, message_callback_t cb);
-
   // Best (maximum) RSSI observed recently, in dBm.
   // Use a signed integer return type to avoid unsigned wrap-around.
   static int getBestRssi();
@@ -72,13 +74,13 @@ private:
   // Message structure (packed to minimize airtime and avoid padding issues)
   struct __attribute__((packed)) struct_message {
     char type;              // 'D' = discovery, 'C' = command
-    char id[32];            // target id (for commands)
-    char originId[28];      // originator id
-    char command[128];      // command payload
+    char id[24];            // target id (for commands)
+    char originId[24];      // originator id
+    char command[64];       // command payload
     uint8_t originMac[6];   // originator MAC
     uint8_t mac[6];         // last-hop MAC
     uint64_t msgUID;        // 64-bit unique id
-    int32_t hopCount;       // hop counter
+    int8_t hopCount;        // hop counter
   };
 
 
@@ -100,16 +102,29 @@ private:
   bool enqueueSend(const uint8_t* mac, const struct_message &msg, uint32_t jitterMs = 0);
 
 
+  //***** Receive event queue *****
+  struct RecvEvent {
+    char id[24];
+    char command[64];
+  };
+
+  volatile uint16_t _rqHead;
+  volatile uint16_t _rqTail;
+  volatile uint16_t _rqCount;
+  RecvEvent _recvQ[ARCANET_RECV_QUEUE_SIZE];
+
+  bool enqueueRecv(const char* id, const char* command);
+  void processRecvQueue();
+
   //***** Peer management *****
   void addPeer(const uint8_t* mac, const String& id);
+  void addPeer(const uint8_t* mac, const char* id);
   bool isKnownPeer(const uint8_t* mac);
 
   void rssiPush(int8_t rssi);
 
   // Broadcasting
   void broadcastDiscovery();
-  void broadcast(const struct_message &message);
-
 
   // ESP-NOW callbacks
   // -------- feature detection (IDF version) ----------
@@ -135,7 +150,7 @@ private:
   bool isDuplicateAndRemember(const uint8_t* origin, uint64_t msgID);
 
   static bool sameMac(const uint8_t* a, const uint8_t* b);
-  static void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength);
+
   static uint64_t rand64();
   static bool isBroadcastMac(const uint8_t* mac);
 
