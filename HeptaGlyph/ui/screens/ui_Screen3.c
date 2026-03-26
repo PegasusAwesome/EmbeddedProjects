@@ -5,6 +5,8 @@
 
 #include "../ui.h"
 
+lv_obj_t * uic_Console;
+lv_obj_t * uic_LuxConsoleButton;
 lv_obj_t * uic_Slider5;
 lv_obj_t * uic_Lux5Icon;
 lv_obj_t * uic_Battery5Icon;
@@ -22,6 +24,8 @@ lv_obj_t * ui_Battery5Icon = NULL;
 lv_obj_t * ui_Lux5Icon = NULL;
 lv_obj_t * ui_Colorwheel5 = NULL;
 lv_obj_t * ui_Slider5 = NULL;
+lv_obj_t * ui_LuxConsoleButton = NULL;
+lv_obj_t * ui_Console = NULL;
 // event funtions
 void ui_event_Screen3(lv_event_t * e)
 {
@@ -81,7 +85,7 @@ void ui_Screen3_screen_init(void)
     lv_obj_clear_flag(ui_Container3, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
     ui_Lux5Button = lv_btn_create(ui_Container3);
-    lv_obj_set_width(ui_Lux5Button, 338);
+    lv_obj_set_width(ui_Lux5Button, 196);
     lv_obj_set_height(ui_Lux5Button, 296);
     lv_obj_set_align(ui_Lux5Button, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_Lux5Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
@@ -166,6 +170,28 @@ void ui_Screen3_screen_init(void)
     lv_obj_set_style_border_opa(ui_Slider5, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ui_Slider5, 4, LV_PART_KNOB | LV_STATE_DEFAULT);
 
+    ui_LuxConsoleButton = lv_btn_create(ui_Container3);
+    lv_obj_set_width(ui_LuxConsoleButton, 822);
+    lv_obj_set_height(ui_LuxConsoleButton, 595);
+    lv_obj_set_x(ui_LuxConsoleButton, -475);
+    lv_obj_set_y(ui_LuxConsoleButton, -30);
+    lv_obj_set_align(ui_LuxConsoleButton, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_LuxConsoleButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_LuxConsoleButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_LuxConsoleButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_LuxConsoleButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_LuxConsoleButton, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(ui_LuxConsoleButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_LuxConsoleButton, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Console = lv_label_create(ui_LuxConsoleButton);
+    lv_obj_set_width(ui_Console, lv_pct(100));
+    lv_obj_set_height(ui_Console, lv_pct(100));
+    lv_obj_set_align(ui_Console, LV_ALIGN_BOTTOM_MID);
+    lv_label_set_text(ui_Console, "Console");
+    lv_obj_set_style_text_color(ui_Console, lv_color_hex(0x0D0D0D), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_Console, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     lv_obj_add_event_cb(ui_Lux5Icon, ui_event_Lux5Icon, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_Colorwheel5, ui_event_Colorwheel5, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_Slider5, ui_event_Slider5, LV_EVENT_ALL, NULL);
@@ -178,6 +204,8 @@ void ui_Screen3_screen_init(void)
     uic_Battery5Icon = ui_Battery5Icon;
     uic_Lux5Icon = ui_Lux5Icon;
     uic_Slider5 = ui_Slider5;
+    uic_LuxConsoleButton = ui_LuxConsoleButton;
+    uic_Console = ui_Console;
 
 }
 
@@ -203,5 +231,9 @@ void ui_Screen3_screen_destroy(void)
     ui_Colorwheel5 = NULL;
     uic_Slider5 = NULL;
     ui_Slider5 = NULL;
+    uic_LuxConsoleButton = NULL;
+    ui_LuxConsoleButton = NULL;
+    uic_Console = NULL;
+    ui_Console = NULL;
 
 }

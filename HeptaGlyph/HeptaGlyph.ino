@@ -134,12 +134,21 @@ static LuxArcana luxes[] = {
     { "lux_4", "LUX4", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
 };
 
+#define CONSOLE_LABEL uic_Console
+static const int CONSOLE_MAX_LINES = 30;      // tune to label height
+static const int CONSOLE_MAX_CHARS = 2048;    // total buffer size
+
+static char consoleBuffer[CONSOLE_MAX_CHARS] = "";
+static int consoleLineCount = 0;
 
 bool golemIn = false;
 
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& command) {
+    // Show everything that comes in
+    console_append("[" + id + "] " + command);
+
     if (id == MY_ID) {
 
     } else if (id == "CONTROLLER") {
@@ -554,4 +563,70 @@ void ui_update_lux_status(LuxArcana* lux, int batt_mv, int rssi_dbm, char* statu
 
         lvgl_port_unlock();
     }
+}
+
+void console_clear() {
+    consoleBuffer[0] = '\0';
+    consoleLineCount = 0;
+
+    if (lvgl_port_lock(-1)) {
+        lv_label_set_text(CONSOLE_LABEL, "");
+        lvgl_port_unlock();
+    }
+}
+
+void console_append(const String& msg) {
+    // Make one line from the incoming command
+    String line = "[" + formatTimestamp() + "] " + msg;
+    line.replace("\r", "");
+    line.replace("\n", " ");   // keep each command on one visual log line
+    line += "\n";
+
+    // If one line is too large, truncate it
+    if (line.length() > 100) {
+        line = line.substring(0, 97) + "...\n";
+    }
+
+    // If buffer would overflow, drop oldest lines until it fits
+    while ((strlen(consoleBuffer) + line.length() >= CONSOLE_MAX_CHARS) || 
+           (consoleLineCount >= CONSOLE_MAX_LINES)) {
+
+        char* firstNewline = strchr(consoleBuffer, '\n');
+        if (firstNewline) {
+            size_t remainingLen = strlen(firstNewline + 1);
+            memmove(consoleBuffer, firstNewline + 1, remainingLen + 1);
+            consoleLineCount--;
+        } else {
+            consoleBuffer[0] = '\0';
+            consoleLineCount = 0;
+            break;
+        }
+    }
+
+    // Append new line
+    strncat(consoleBuffer, line.c_str(), CONSOLE_MAX_CHARS - strlen(consoleBuffer) - 1);
+    consoleLineCount++;
+
+    // Update LVGL label
+    if (lvgl_port_lock(-1)) {
+        // lv_label_set_long_mode(CONSOLE_LABEL, LV_LABEL_LONG_WRAP);
+        lv_obj_set_width(CONSOLE_LABEL, lv_obj_get_width(CONSOLE_LABEL)); // ensures wrapping uses current width
+        lv_label_set_text(CONSOLE_LABEL, consoleBuffer);
+        lvgl_port_unlock();
+    }
+}
+
+String formatTimestamp() {
+    uint32_t totalSeconds = millis() / 1000;
+    uint32_t hours   = totalSeconds / 3600;
+    uint32_t minutes = (totalSeconds % 3600) / 60;
+    uint32_t seconds = totalSeconds % 60;
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%02lu:%02lu:%02lu",
+             (unsigned long)hours,
+             (unsigned long)minutes,
+             (unsigned long)seconds);
+
+    return String(buf);
 }

@@ -26,6 +26,8 @@ extern void ui_event_Colorwheel5(lv_event_t * e);
 extern lv_obj_t * ui_Colorwheel5;
 extern void ui_event_Slider5(lv_event_t * e);
 extern lv_obj_t * ui_Slider5;
+extern lv_obj_t * ui_LuxConsoleButton;
+extern lv_obj_t * ui_Console;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_Screen3;
 extern lv_obj_t * uic_Container3;
@@ -35,6 +37,8 @@ extern lv_obj_t * uic_Network5Icon;
 extern lv_obj_t * uic_Battery5Icon;
 extern lv_obj_t * uic_Lux5Icon;
 extern lv_obj_t * uic_Slider5;
+extern lv_obj_t * uic_LuxConsoleButton;
+extern lv_obj_t * uic_Console;
 
 #ifdef __cplusplus
 } /*extern "C"*/
