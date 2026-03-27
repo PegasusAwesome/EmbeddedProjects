@@ -231,6 +231,7 @@ void setColorFromScreen4(lv_event_t * e) {
     lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
     arcanet.sendCommand("LUX4", "SET_HUE_"+String(hsv.h));
 }
+
 void setBrightness4(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int val = lv_slider_get_value(slider);
@@ -257,9 +258,9 @@ void activateGolemOutSequence(lv_event_t * e) {
 
 
 void setup() {
+
     delay(500);
     Serial.begin(115200);
-    // delay(3000);
 
     static esp_lcd_panel_handle_t panel_handle = NULL; // Declare a handle for the LCD panel
     static esp_lcd_touch_handle_t tp_handle = NULL;    // Declare a handle for the touch panel
