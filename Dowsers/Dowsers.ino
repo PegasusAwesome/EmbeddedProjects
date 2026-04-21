@@ -2,38 +2,36 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "DOWSER_30";
+const String MY_ID = "DOWSER31";
 
-//GPIO of Popwer (N-Fet) pin
-const uint8_t PIN_POWER          = 1;
-
-//GPIO of Popwer (GPIO 0 for reading battery lvl) pin
-const uint8_t PIN_BATTERY        = 0;
-
+#define MOTOR_PIN     1
  
 unsigned long updateScheduledAt  = 0;
-uint32_t tUpdatePeriod = 60000;
+uint32_t tUpdatePeriod = 30000;
 boolean pendingUpdate = false;
-int minBatteryLevel = 2900;
-boolean relicStatus = false;
 
 uint32_t tLastBlinkOn  = 0;
 uint32_t tLastBlinkOff = 0;
 uint32_t tBlinkTime    = 200;
 uint32_t tBlinkPeriod  = 3000;
 
+float filteredRssi = -100.0;
+unsigned long lastPulse = 0;
+bool motorState = false;
+unsigned long lastSignal = 0;
+
 uint32_t now            = millis();
+
+//more sinusy
+//use onCommandReceived?
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& msg) {
 
-    if (id == MY_ID || id == "DOWSERALL") {
-
-    } else if (id == "ALL") {
-        if (msg == "SEND_UPDATE") {
-            prepareUpdateNow();
-
-        }
+    if ( (id == MY_ID || id == "DOWSERALL" || id == "ALL") && msg == "SEND_UPDATE") {
+        prepareUpdateNow();
+    } else if (id == MY_ID || id == "DOWSERALL") {
+        lastSignal = millis();
     }
 }
 
@@ -46,21 +44,22 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
 
-    // Initialize the Arcanet network
-    arcanet.init();
+    ledcAttach(MOTOR_PIN, 200, 8);
+    ledcWrite(MOTOR_PIN, 0);//0-255
 
-    analogSetPinAttenuation(PIN_BATTERY, ADC_11db); // FS ≈ 3.3 V
+    // Initialize the Arcanet network
+    arcanet.setRssiWindowSize(1);
+    arcanet.init();
 
     randomSeed(esp_random());
 
     Serial.println("####################################");
-    Serial.println("### ProjectBeacon setup complete ###");
+    Serial.println("### Dowsers setup complete ###");
     Serial.println("####################################");
     Serial.println("My ID is: "+String(MY_ID));
 
     pendingUpdate = true;
-    updateScheduledAt = millis() + 30000;
-
+    updateScheduledAt = millis() + tUpdatePeriod;
 }
 
 
@@ -68,24 +67,47 @@ void loop() {
     now = millis();
 
     arcanet.loop();//housekeeping our presence in Arcanet
-readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+    //readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     blink();//show a blinking led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
 
-//    serviceFor(10);
+    updateMotorFromRssiPulse(arcanet.getBestRssi());
 }
 
-void serviceFor(uint32_t ms) {
-    uint32_t start = millis();
-    while (millis() - start < ms) {
-        now = millis();
-        arcanet.loop();            // processes discovery + queue
-        blink();
-        sendUpdate();
-        updateControllers();
-        delay(1);                  // yield
-    }
+void setMotor(int strength) {
+    ledcWrite(MOTOR_PIN, strength);
+}
+
+void updateMotorFromRssiPulse(int rssi) {
+
+  filteredRssi = 0.8 * filteredRssi + 0.2 * rssi;
+
+  unsigned long now = millis();
+
+  if (filteredRssi <= -128) {
+    setMotor(0);
+    return;
+  }
+
+  int strength = map((int)filteredRssi, -93, -35, 60, 255);
+  strength = constrain(strength, 60, 255);
+
+  int interval = map((int)filteredRssi, -93, -35, 4000, 130);
+  interval = constrain(interval, 160, 4000);
+
+  if (now - lastPulse >= (unsigned long) interval && ((lastSignal+5000) > millis()) ) {
+    lastPulse = now;
+    motorState = true;
+//Serial.println(strength);
+    setMotor(strength);
+  }
+
+  // pulse duration
+  if (motorState && now - lastPulse > 100) {
+    motorState = false;
+    setMotor(0);
+  }
 }
 
 
@@ -93,7 +115,6 @@ void serviceFor(uint32_t ms) {
 void updateControllers() {
     if ( now > updateScheduledAt + tUpdatePeriod) {
         prepareUpdate();
-        checkBatteryLevel();
     }
 }
 
@@ -129,28 +150,10 @@ void readSerial() {
     }
 }
 
-void checkBatteryLevel() {
-    if (getBatteryLevel()<minBatteryLevel) {
-        delay(50);
-        if (getBatteryLevel()<minBatteryLevel) {
-            delay(50);
-            if (getBatteryLevel()<minBatteryLevel) {
-                pinMode(PIN_POWER, OUTPUT);
-                digitalWrite(PIN_POWER, LOW);
-            }
-        }
-    }
-}
-
-int getBatteryLevel() {
-    int mv = analogReadMilliVolts(PIN_BATTERY); 
-    mv = mv / 0.5;
-    return mv;
-}
 
 void prepareUpdate() {
     pendingUpdate = true;
-    updateScheduledAt = millis() + random(0, 1000);
+    updateScheduledAt = millis() + random(0, 50);
 }
 void prepareUpdateNow() {
     pendingUpdate = true;
@@ -160,8 +163,8 @@ void prepareUpdateNow() {
 void sendUpdate() {
     if (pendingUpdate && millis() >= updateScheduledAt) {
         pendingUpdate = false;
-        int v_batt = getBatteryLevel();
-        arcanet.sendCommand("CONTROLLER", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_"+( relicStatus ? "ON" : "OFF") );
+        int v_batt = 999;
+        arcanet.sendCommand("DOWSER32", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_" + "ON" );
     }
 }
 
