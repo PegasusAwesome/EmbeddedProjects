@@ -7,7 +7,7 @@ const String MY_ID = "DOWSER31";
 #define MOTOR_PIN     1
  
 unsigned long updateScheduledAt  = 0;
-uint32_t tUpdatePeriod = 30000;
+uint32_t tUpdatePeriod = 10000;
 boolean pendingUpdate = false;
 
 uint32_t tLastBlinkOn  = 0;
@@ -33,6 +33,7 @@ void onCommandReceived(const String& id, const String& msg) {
     } else if (id == MY_ID || id == "DOWSERALL") {
         lastSignal = millis();
     }
+
 }
 
 // Create an instance of the Arcanet library
@@ -48,7 +49,7 @@ void setup() {
     ledcWrite(MOTOR_PIN, 0);//0-255
 
     // Initialize the Arcanet network
-    arcanet.setRssiWindowSize(1);
+    arcanet.setRssiWindowSize(2);
     arcanet.init();
 
     randomSeed(esp_random());
@@ -66,13 +67,16 @@ void setup() {
 void loop() {
     now = millis();
 
-    arcanet.loop();//housekeeping our presence in Arcanet
-    //readSerial();//any commands from outside (TODO: put this behind a compile time switch)
-    blink();//show a blinking led so we know this beacon is on
+    arcanet.loop();//housekeepis from outside (TODO: put this behind a compile time switch)
+    blink();//show a blinkinng our presence in Arcanet
+    //readSerial();//any commandg led so we know this beacon is on
     sendUpdate();//send update if requested
     updateControllers();//prepare the regular update
 
     updateMotorFromRssiPulse(arcanet.getBestRssi());
+
+    delay(10);
+
 }
 
 void setMotor(int strength) {
@@ -80,8 +84,7 @@ void setMotor(int strength) {
 }
 
 void updateMotorFromRssiPulse(int rssi) {
-
-  filteredRssi = 0.8 * filteredRssi + 0.2 * rssi;
+  filteredRssi = 0.75 * filteredRssi + 0.25 * rssi;
 
   unsigned long now = millis();
 
@@ -90,21 +93,105 @@ void updateMotorFromRssiPulse(int rssi) {
     return;
   }
 
-  int strength = map((int)filteredRssi, -93, -35, 60, 255);
-  strength = constrain(strength, 60, 255);
+  int pulseWidth = 50;
+  int strength = 150;
+  int interval = 3000;
 
-  int interval = map((int)filteredRssi, -93, -35, 4000, 130);
-  interval = constrain(interval, 160, 4000);
+//  Serial.println(filteredRssi);
+
+  if (filteredRssi<-90) {
+    pulseWidth = 40;
+    strength = 150;
+    interval = 3000;
+  } else if (filteredRssi<-83) {
+    pulseWidth = 90;
+    strength = 255;
+    interval = 2200;
+  } else if (filteredRssi<-76) {
+    pulseWidth = 175;
+    strength = 255;
+    interval = 1500;
+  } else if (filteredRssi<-69) {
+    pulseWidth = 160;
+    strength = 255;
+    interval = 1100;
+  } else if (filteredRssi<-62) {
+    pulseWidth = 120;
+    strength = 255;
+    interval = 700;
+  } else if (filteredRssi<-55) {
+    pulseWidth = 120;
+    strength = 255;
+    interval = 400;
+  } else if (filteredRssi<-48) {
+    pulseWidth = 80;
+    strength = 255;
+    interval = 500;
+  } else if (filteredRssi<-41) {
+    pulseWidth = 80;
+    strength = 255;
+    interval = 500;
+  } else if (filteredRssi<-34) {
+    pulseWidth = 80;
+    strength = 255;
+    interval = 500;
+  } else if (filteredRssi>=-34) {
+    pulseWidth = 80;
+    strength = 255;
+    interval = 80;
+  } 
+
 
   if (now - lastPulse >= (unsigned long) interval && ((lastSignal+5000) > millis()) ) {
+
     lastPulse = now;
     motorState = true;
-//Serial.println(strength);
     setMotor(strength);
+
+    if (filteredRssi>-41 && filteredRssi<=-34) {
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(80);
+    } else if (filteredRssi>-48 && filteredRssi<=-41) {
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(80);
+    } else if (filteredRssi>-55 && filteredRssi<=-48) {
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(40);
+      setMotor(strength);
+      delay(pulseWidth);
+      setMotor(0);
+      delay(60);
+    }
   }
 
   // pulse duration
-  if (motorState && now - lastPulse > 100) {
+  if (motorState && now - lastPulse > pulseWidth) {
     motorState = false;
     setMotor(0);
   }
@@ -168,3 +255,38 @@ void sendUpdate() {
     }
 }
 
+
+
+
+
+
+//////
+
+void updateMotorFromRssiPulse_OLD(int rssi) {
+  filteredRssi = 0.8 * filteredRssi + 0.2 * rssi;
+
+  unsigned long now = millis();
+
+  if (filteredRssi <= -128) {
+    setMotor(0);
+    return;
+  }
+
+  int strength = map((int)filteredRssi, -93, -35, 60, 255);
+  strength = constrain(strength, 60, 255);
+
+  int interval = map((int)filteredRssi, -93, -35, 4000, 130);
+  interval = constrain(interval, 160, 4000);
+
+  if (now - lastPulse >= (unsigned long) interval && ((lastSignal+5000) > millis()) ) {
+    lastPulse = now;
+    motorState = true;
+    setMotor(strength);
+  }
+
+  // pulse duration
+  if (motorState && now - lastPulse > 100) {
+    motorState = false;
+    setMotor(0);
+  }
+}

@@ -5,7 +5,7 @@
 #include "esp_bt.h"
 
 #ifndef ARCANET_DEBUG
-#define ARCANET_DEBUG 1
+#define ARCANET_DEBUG 0
 #endif
 
 #if ARCANET_DEBUG
@@ -468,7 +468,7 @@ void Arcanet::processRxFrames() {
     }
 
     const char* relayId = lookupPeerId(sender_mac);
-    //ARC_LOGF("Received command %s, from originId: %s, via relayId: %s, for id: %s\n", msg.command, msg.originId, (relayId ? relayId : "unknown"), msg.id);
+    ARC_LOGF("Received command %s, from originId: %s, via relayId: %s, for id: %s\n", msg.command, msg.originId, (relayId ? relayId : "unknown"), msg.id);
 
     if (isDuplicateAndRemember(msg.originMac, msg.msgUID)) {
       continue;
