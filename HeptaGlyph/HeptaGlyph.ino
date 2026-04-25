@@ -143,11 +143,29 @@ static int consoleLineCount = 0;
 
 bool golemIn = false;
 
+static void debug_begin(unsigned long baud) {
+    Serial.begin(baud);
+    Serial0.begin(baud);
+    delay(200);
+}
+
+static void debug_println(const char* message) {
+    Serial.println(message);
+    Serial0.println(message);
+}
+
+static void debug_println(const String& message) {
+    Serial.println(message);
+    Serial0.println(message);
+}
+
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& command) {
     // Show everything that comes in
     console_append("[" + id + "] " + command);
+
+    debug_println("Hap");
 
     if (id == MY_ID) {
 
@@ -260,7 +278,7 @@ void activateGolemOutSequence(lv_event_t * e) {
 void setup() {
 
     delay(500);
-    Serial.begin(115200);
+    debug_begin(115200);
 
     static esp_lcd_panel_handle_t panel_handle = NULL; // Declare a handle for the LCD panel
     static esp_lcd_touch_handle_t tp_handle = NULL;    // Declare a handle for the touch panel
@@ -338,10 +356,10 @@ void setup() {
     arcanet.init();
     delay(500);
 
-    Serial.println("#################################");
-    Serial.println("### HeptaGlyph setup complete ###");
-    Serial.println("#################################");
-    Serial.println("My ID is: "+String(MY_ID));
+    debug_println("#################################");
+    debug_println("### HeptaGlyph setup complete ###");
+    debug_println("#################################");
+    debug_println("My ID is: " + String(MY_ID));
 }
 
 void loop() {

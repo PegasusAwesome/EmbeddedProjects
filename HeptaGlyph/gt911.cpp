@@ -353,6 +353,7 @@ esp_lcd_touch_handle_t touch_gt911_init()
     // Reset the touch screen before usage
     DEV_I2C_Port port = DEV_I2C_Init();  // Initialize I2C port
     IO_EXTENSION_Init();  // Initialize the IO EXTENSION GPIO chip for backlight control
+
     delay(10);
     // DEV_GPIO_Mode(EXAMPLE_PIN_NUM_TOUCH_INT, GPIO_MODE_INPUT_OUTPUT);  // Set GPIO pin mode for interrupt
     pinMode(EXAMPLE_PIN_NUM_TOUCH_INT, OUTPUT);

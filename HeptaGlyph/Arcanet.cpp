@@ -9,8 +9,8 @@
 #endif
 
 #if ARCANET_DEBUG
-#define ARC_LOGF(...) Serial.printf(__VA_ARGS__)
-#define ARC_LOG(x) Serial.println(x)
+#define ARC_LOGF(...) do { Serial.printf(__VA_ARGS__); Serial0.printf(__VA_ARGS__); } while (0)
+#define ARC_LOG(x) do { Serial.println(x); Serial0.println(x); } while (0)
 #else
 #define ARC_LOGF(...)
 #define ARC_LOG(x)
