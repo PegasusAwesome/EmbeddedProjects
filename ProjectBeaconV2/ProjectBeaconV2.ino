@@ -1,11 +1,9 @@
 #include <Arduino.h>
 #include "src/Arcanet.h"
+#include <FastLED.h>
 
 // Your device's unique ID
 const String MY_ID = "LANTERN30";
-
-//GPIO of Popwer (N-Fet) pin
-const uint8_t PIN_POWER          = 23;
 
 //GPIO of Popwer (GPIO 0 for reading battery lvl) pin
 const uint8_t PIN_BATTERY        = 1;
@@ -16,19 +14,21 @@ const int     freq               = 500;  // 0.5kHz frequency
 const int     resolution         = 8;     // 8-bit resolution (0-255)
 const int     PWM_MAX            = (1 << resolution) - 1;
 
+#define DATA_PIN       5
+#define LED_TYPE       WS2812
+#define COLOR_ORDER    GRB
+#define NUM_LEDS       4
+
+CRGB leds[NUM_LEDS];
+
+
+
 unsigned long updateScheduledAt  = 0;
 uint32_t tUpdatePeriod = 10000;
 boolean pendingUpdate = false;
-int minBatteryLevel = 2900;
 boolean relicStatus = false;
 
-uint32_t tLastBlinkOn  = 0;
-uint32_t tLastBlinkOff = 0;
-uint32_t tBlinkTime    = 200;
-uint32_t tBlinkPeriod  = 3000;
 
-uint32_t tDemoLuxPeriod = 3000;
-uint32_t tDemoLux       = 0;
 int16_t  hue            = 0;
 
 uint32_t now            = millis();
@@ -45,9 +45,6 @@ void onCommandReceived(const String& id, const String& msg) {
             ledcWrite(PIN_LANTERN, 0);
             relicStatus = false;
             prepareUpdateNow();
-
-        } else if (msg == "POWER_OFF") {
-            digitalWrite(PIN_POWER, LOW);
 
         } else if (msg == "SEND_UPDATE") {
             prepareUpdateNow();
@@ -71,10 +68,6 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
 
-    //Open Fet to power
-    pinMode(PIN_POWER, OUTPUT);
-    digitalWrite(PIN_POWER, HIGH);
-
     // Init lantern led pin
     ledcAttach(PIN_LANTERN, freq, resolution);
 
@@ -93,22 +86,11 @@ void setup() {
     pendingUpdate = true;
     updateScheduledAt = millis() + 10000;
 
-    delay(400);
-    ledcWrite(PIN_LANTERN, 0);   // OFF
-    delay(400);
-    ledcWrite(PIN_LANTERN, 128);   // ON
-    delay(400);
-    ledcWrite(PIN_LANTERN, 0);   // OFF
-    delay(400);
-    ledcWrite(PIN_LANTERN, 128);   // ON
-    delay(400);
-    ledcWrite(PIN_LANTERN, 0);   // OFF
-    delay(400);
-    ledcWrite(PIN_LANTERN, 128);   // ON
-    delay(400);
-    ledcWrite(PIN_LANTERN, 0);   // OFF
-
     initCandleLogic();
+
+    FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+    FastLED.setBrightness(255);
+    FastLED.clear(true);
 
 }
 
@@ -119,8 +101,11 @@ void loop() {
     float brightness = computeCandleBrightness();
     writeBrightness(brightness);
 
-readSerial();//any commands from outside (TODO: put this behind a compile time switch)
+    readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     serviceFor(10);
+
+    fill_solid(leds, NUM_LEDS, CRGB::Red);
+
 }
 
 
@@ -129,7 +114,6 @@ void serviceFor(uint32_t ms) {
     while (millis() - start < ms) {
         now = millis();
         arcanet.loop();            // processes discovery + queue
-        blink();
         sendUpdate();
         updateControllers();
         delay(1);                  // yield
@@ -140,20 +124,6 @@ void serviceFor(uint32_t ms) {
 void updateControllers() {
     if ( now > updateScheduledAt + tUpdatePeriod) {
         prepareUpdate();
-        checkBatteryLevel();
-    }
-}
-
-
-void blink() {
-    if (now > tBlinkPeriod + tLastBlinkOn) {
-        tLastBlinkOn  = now;
-        tLastBlinkOff = now + tBlinkTime;
-        digitalWrite(LED_BUILTIN, LOW);
-    }
-
-    if (now > tLastBlinkOff) {
-        digitalWrite(LED_BUILTIN, HIGH);
     }
 }
 
@@ -172,19 +142,6 @@ void readSerial() {
             }
 
             arcanet.sendCommand(id, cmd);
-        }
-    }
-}
-
-void checkBatteryLevel() {
-    if (getBatteryLevel()<minBatteryLevel) {
-        delay(150);
-        if (getBatteryLevel()<minBatteryLevel) {
-            delay(250);
-            if (getBatteryLevel()<minBatteryLevel) {
-                pinMode(PIN_POWER, OUTPUT);
-                digitalWrite(PIN_POWER, LOW);
-            }
         }
     }
 }
