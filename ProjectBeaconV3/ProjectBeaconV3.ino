@@ -1,222 +1,152 @@
-#include <Arduino.h>
-#include "src/Arcanet.h"
+#include <FastLED.h>
+#include <WiFi.h>
+#include "esp_bt.h"
 
-// Your device's unique ID
-const String MY_ID = "LANTERN11";
+// --- hardware ---
+#define DATA_PIN     1
+//#define LED_TYPE          SK6812
+#define LED_TYPE          WS2812B
+#define COLOR_ORDER       GRB
+#define NUM_LEDS          93
 
-//GPIO of Popwer (N-Fet) pin
-const uint8_t PIN_POWER          = 23;
+// --- effect tuning ---
+#define MAX_BRIGHTNESS    255   // global limit (0..255)
+#define HEART_MIN_BRIGHTNESS  1
+#define HEART_MAX_BRIGHTNESS  255
 
-//GPIO of Popwer (GPIO 0 for reading battery lvl) pin
-const uint8_t PIN_BATTERY        = 1;
+#define HEART_BPM 60
+#define HEART_CYCLE_MS (60000 / HEART_BPM)
 
-//GPIO of Lantern control pin
-const uint8_t PIN_LANTERN        = 22;
- 
-unsigned long updateScheduledAt  = 0;
-uint32_t tUpdatePeriod = 10000;
-boolean pendingUpdate = false;
-int minBatteryLevel = 2900;
-boolean relicStatus = false;
+CRGB leds[NUM_LEDS];
 
-uint32_t tLastBlinkOn  = 0;
-uint32_t tLastBlinkOff = 0;
-uint32_t tBlinkTime    = 200;
-uint32_t tBlinkPeriod  = 3000;
 
-uint32_t tDemoLuxPeriod = 3000;
-uint32_t tDemoLux       = 0;
-int16_t  hue            = 0;
+// --- state ---
+uint32_t tLastMove = 0;
+uint32_t tLastCol  = 0;
 
-uint32_t now            = millis();
-
-// Callback function to handle received commands
-void onCommandReceived(const String& id, const String& msg) {
-    if (id == MY_ID || id == "LANTERNALL") {
-        if (msg == "LANTERN_ON") {
-Serial.println("ON");
-            digitalWrite(PIN_LANTERN, HIGH);
-            relicStatus = true;
-            prepareUpdateNow();
-
-        } else if (msg == "LANTERN_OFF") {
-Serial.println("OFF");
-            digitalWrite(PIN_LANTERN, LOW);
-            relicStatus = false;
-            prepareUpdateNow();
-
-        } else if (msg == "POWER_OFF") {
-            digitalWrite(PIN_POWER, LOW);
-
-        } else if (msg == "SEND_UPDATE") {
-            prepareUpdateNow();
-
-        }
-    } else if (id == "ALL") {
-        if (msg == "SEND_UPDATE") {
-            prepareUpdateNow();
-
-        }
-    }
+static float smoothStep(float t) {
+    if (t <= 0.0f) return 0.0f;
+    if (t >= 1.0f) return 1.0f;
+    // Quintic smoothing gives a softer start/end than the basic smoothstep.
+    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
 }
 
-// Create an instance of the Arcanet library
-Arcanet arcanet(MY_ID, onCommandReceived);
+static float rampSegment(float phase, float startPhase, float endPhase, float from, float to) {
+    const float segmentDuration = endPhase - startPhase;
+    const float progress = (phase - startPhase) / segmentDuration;
+    return from + ((to - from) * smoothStep(progress));
+}
+
+static float heartbeatLevel(uint32_t elapsedMs) {
+    const float phase = float(elapsedMs) / float(HEART_CYCLE_MS);
+
+    if (phase < 0.1286f) {
+        return rampSegment(phase, 0.0f, 0.1286f, 0.0f, 1.0f);
+    }
+    if (phase < 0.2571f) {
+        return rampSegment(phase, 0.1286f, 0.2571f, 1.0f, 0.30f);
+    }
+    if (phase < 0.3571f) {
+        return rampSegment(phase, 0.2571f, 0.3571f, 0.30f, 0.82f);
+    }
+    if (phase < 0.5429f) {
+        return rampSegment(phase, 0.3571f, 0.5429f, 0.82f, 0.0f);
+    }
+    return 0.0f;
+}
+
+static void render() {
+    const uint32_t beatPhaseMs = millis() % HEART_CYCLE_MS;
+    const float beatLevel = heartbeatLevel(beatPhaseMs);
+    const uint8_t brightness = HEART_MIN_BRIGHTNESS + uint8_t((HEART_MAX_BRIGHTNESS - HEART_MIN_BRIGHTNESS) * beatLevel);
+
+    fill_solid(leds, NUM_LEDS, CHSV(0, 255, brightness));
+
+    Serial.print(beatPhaseMs);
+    Serial.print(" ");
+    Serial.println(brightness);
+
+    FastLED.show();
+}
+
+
+// draw current frame
+static void renderTest() {
+    CHSV c0(0, 0, MAX_BRIGHTNESS);
+    CHSV c1(32, 0, MAX_BRIGHTNESS);
+    CHSV c2(64, 0, MAX_BRIGHTNESS);
+    CHSV c3(96, 0, MAX_BRIGHTNESS);
+    CHSV c4(128, 0, MAX_BRIGHTNESS);
+    CHSV c5(160, 0, MAX_BRIGHTNESS);
+
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+
+    for (int walk = 0; walk < 32; walk++) {
+        leds[walk] = c0;
+    }
+
+    for (int walk = 32; walk < 32+24; walk++) {
+        leds[walk] = c1;
+    }
+
+    for (int walk = 32+24; walk < 32+24+16; walk++) {
+        leds[walk] = c2;
+    }
+
+    for (int walk = 32+24+16; walk < 32+24+16+12; walk++) {
+        leds[walk] = c3;
+    }
+
+    for (int walk = 32+24+16+12; walk < 32+24+16+12+8; walk++) {
+        leds[walk] = c4;
+    }
+
+    for (int walk = 32+24+16+12+8; walk < 32+24+16+12+8+1; walk++) {
+        leds[walk] = c5;
+    }
+
+    FastLED.show();
+}
+
+
+
+
+
+
+
+static void sleepMs(uint32_t ms) {
+    // // Lock the physical pin state at 0V
+    // gpio_hold_en((gpio_num_t)DATA_PIN);
+
+    // esp_sleep_enable_timer_wakeup((uint64_t)ms * 1000ULL);
+    // esp_light_sleep_start();
+
+    // // Release the hold so the CPU can control it again
+    // gpio_hold_dis((gpio_num_t)DATA_PIN);
+
+    // // Tiny delay for stability
+    // delayMicroseconds(50); 
+
+  vTaskDelay(pdMS_TO_TICKS(ms));
+}
+
 
 void setup() {
-    Serial.begin(115200);
-    //Optional code to create blinking led in loop  
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
+  Serial.begin(115200);
 
-    //Start with latnern off, turn down gpio port (set to 0v)
-    pinMode(PIN_LANTERN, OUTPUT);
-    digitalWrite(PIN_LANTERN, LOW);
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.setBrightness(MAX_BRIGHTNESS);
+  FastLED.clear(true);
 
-    //Open Fet to power
-    pinMode(PIN_POWER, OUTPUT);
-    digitalWrite(PIN_POWER, HIGH);
+  tLastMove = millis();
+  tLastCol  = millis();
 
-    // Initialize the Arcanet network
-    arcanet.init();
-
-    analogSetPinAttenuation(PIN_BATTERY, ADC_11db); // FS ≈ 3.3 V
-
-    randomSeed(esp_random());
-
-    Serial.println("####################################");
-    Serial.println("### ProjectBeacon setup complete ###");
-    Serial.println("####################################");
-    Serial.println("My ID is: "+String(MY_ID));
-
-    //Show lantern is working
-    digitalWrite(PIN_LANTERN, HIGH);
-    delay(400);
-    digitalWrite(PIN_LANTERN, LOW);
-    delay(400);
-    digitalWrite(PIN_LANTERN, HIGH);
-    delay(400);
-    digitalWrite(PIN_LANTERN, LOW);
-    delay(400);
-    digitalWrite(PIN_LANTERN, HIGH);
-    delay(400);
-    digitalWrite(PIN_LANTERN, LOW);
-
-    pendingUpdate = true;
-    updateScheduledAt = millis() + 10000;
-
+  WiFi.mode(WIFI_OFF); 
+  esp_bt_controller_disable();
+  setCpuFrequencyMhz(80);
 }
-
 
 void loop() {
-    now = millis();
-
-    arcanet.loop();//housekeeping our presence in Arcanet
-readSerial();//any commands from outside (TODO: put this behind a compile time switch)
-    blink();//show a blinking led so we know this beacon is on
-    sendUpdate();//send update if requested
-    updateControllers();//prepare the regular update
-    serviceFor(10);
+    render();
+    sleepMs(15);
 }
-//    demoLux();
-//    GolemEntry();
-
-void serviceFor(uint32_t ms) {
-    uint32_t start = millis();
-    while (millis() - start < ms) {
-        now = millis();
-        arcanet.loop();            // processes discovery + queue
-        blink();
-        sendUpdate();
-        updateControllers();
-        delay(1);                  // yield
-    }
-}
-
-
-void demoLux() {
-    // if ( now > tDemoLux + tDemoLuxPeriod) {
-    //     arcanet.sendCommand("LUX2", "SET_HUE_"+String(hue));
-    //     arcanet.sendCommand("LUX3", "SET_HUE_"+String( (hue+120)%360) );
-    //     arcanet.sendCommand("LUX4", "SET_HUE_"+String( (hue+240)%360) );
-    //     tDemoLux = now;
-    //     hue = hue>=360 ? 0 : hue+1;
-    // }
-}
-
-
-void updateControllers() {
-    if ( now > updateScheduledAt + tUpdatePeriod) {
-        prepareUpdate();
-        checkBatteryLevel();
-    }
-}
-
-
-void blink() {
-    if (now > tBlinkPeriod + tLastBlinkOn) {
-        tLastBlinkOn  = now;
-        tLastBlinkOff = now + tBlinkTime;
-        digitalWrite(LED_BUILTIN, LOW);
-    }
-
-    if (now > tLastBlinkOff) {
-        digitalWrite(LED_BUILTIN, HIGH);
-    }
-}
-
-void readSerial() {
-    if (Serial.available() > 0) {
-        String input = Serial.readStringUntil('\n');
-        input.trim();
-        int separator = input.indexOf('_');
-        if (separator > 0) {
-            String id = input.substring(0, separator);
-            String cmd = input.substring(separator + 1);
-
-            if (id == MY_ID) {
-                onCommandReceived(id, cmd);
-            }
-
-            arcanet.sendCommand(id, cmd);
-        }
-    }
-}
-
-void checkBatteryLevel() {
-    if (getBatteryLevel()<minBatteryLevel) {
-        delay(150);
-        if (getBatteryLevel()<minBatteryLevel) {
-            delay(250);
-            if (getBatteryLevel()<minBatteryLevel) {
-                pinMode(PIN_POWER, OUTPUT);
-                digitalWrite(PIN_POWER, LOW);
-            }
-        }
-    }
-}
-
-int getBatteryLevel() {
-    int mv = analogReadMilliVolts(PIN_BATTERY); 
-Serial.println("mv: "+String(mv));
-    mv = mv<1 ? 1 : mv*2;
-    return mv;
-}
-
-void prepareUpdate() {
-    pendingUpdate = true;
-    updateScheduledAt = millis() + random(0, 2000);
-}
-void prepareUpdateNow() {
-    pendingUpdate = true;
-    updateScheduledAt = millis() + 10 + random(0, 10);
-}
-
-void sendUpdate() {
-    if (pendingUpdate && millis() >= updateScheduledAt) {
-        pendingUpdate = false;
-        int v_batt = getBatteryLevel();
-        arcanet.sendCommand("CONTROLLER", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_"+( relicStatus ? "ON" : "OFF") );
-    }
-}
-

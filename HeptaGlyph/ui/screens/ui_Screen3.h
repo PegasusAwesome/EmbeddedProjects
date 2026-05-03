@@ -16,27 +16,11 @@ extern void ui_Screen3_screen_destroy(void);
 extern void ui_event_Screen3(lv_event_t * e);
 extern lv_obj_t * ui_Screen3;
 extern lv_obj_t * ui_Container3;
-extern lv_obj_t * ui_Lux5Button;
-extern lv_obj_t * ui_Lux5Label;
-extern lv_obj_t * ui_Network5Icon;
-extern lv_obj_t * ui_Battery5Icon;
-extern void ui_event_Lux5Icon(lv_event_t * e);
-extern lv_obj_t * ui_Lux5Icon;
-extern void ui_event_Colorwheel5(lv_event_t * e);
-extern lv_obj_t * ui_Colorwheel5;
-extern void ui_event_Slider5(lv_event_t * e);
-extern lv_obj_t * ui_Slider5;
 extern lv_obj_t * ui_LuxConsoleButton;
 extern lv_obj_t * ui_Console;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_Screen3;
 extern lv_obj_t * uic_Container3;
-extern lv_obj_t * uic_Lux5Button;
-extern lv_obj_t * uic_Lux5Label;
-extern lv_obj_t * uic_Network5Icon;
-extern lv_obj_t * uic_Battery5Icon;
-extern lv_obj_t * uic_Lux5Icon;
-extern lv_obj_t * uic_Slider5;
 extern lv_obj_t * uic_LuxConsoleButton;
 extern lv_obj_t * uic_Console;
 

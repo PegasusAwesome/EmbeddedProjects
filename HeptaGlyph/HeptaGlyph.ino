@@ -165,8 +165,6 @@ void onCommandReceived(const String& id, const String& command) {
     // Show everything that comes in
     console_append("[" + id + "] " + command);
 
-    debug_println("Hap");
-
     if (id == MY_ID) {
 
     } else if (id == "CONTROLLER") {
@@ -253,7 +251,7 @@ void setColorFromScreen4(lv_event_t * e) {
 void setBrightness4(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int val = lv_slider_get_value(slider);
-    arcanet.sendCommand("LUX4", "SET_VAL_"+String(val));
+    arcanet.sendCommand("LUX4", "SET_BRIGHTNESS_"+String(val));
 }
 
 
@@ -299,6 +297,8 @@ void setup() {
     if (lvgl_port_lock(-1)) {
         ui_init();
 
+        lv_label_set_long_mode(CONSOLE_LABEL, LV_LABEL_LONG_WRAP);
+
         size_t refs_count = sizeof(RELIC_REFS) / sizeof(RELIC_REFS[0]);
         size_t lanterns_count = sizeof(lanterns) / sizeof(lanterns[0]);
         size_t luxes_count    = sizeof(luxes) / sizeof(luxes[0]);
@@ -317,7 +317,7 @@ void setup() {
 
             if (lanterns[i].mainButton) {
                 lv_obj_add_event_cb(lanterns[i].mainButton, on_lantern_button_event, LV_EVENT_CLICKED, &lanterns[i]);
-                lv_obj_set_style_bg_color(lanterns[i].mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_bg_color(lanterns[i].mainButton, lv_color_hex(0x9CA3AF), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 lv_img_set_src(lanterns[i].networkIcon, &ui_img_wifi_disabled_png);
                 lv_img_set_src(lanterns[i].batteryIcon, &ui_img_battery_disabled_png);
@@ -339,7 +339,7 @@ void setup() {
 
             if (luxes[i-n].mainButton) {
                 lv_obj_add_event_cb(luxes[i-n].mainButton, on_lux_button_event, LV_EVENT_CLICKED, &luxes[i-n]);
-                lv_obj_set_style_bg_color(luxes[i-n].mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_bg_color(luxes[i-n].mainButton, lv_color_hex(0x9CA3AF), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 lv_img_set_src(luxes[i-n].networkIcon, &ui_img_wifi_disabled_png);
                 lv_img_set_src(luxes[i-n].batteryIcon, &ui_img_battery_disabled_png);
@@ -379,9 +379,9 @@ void checkStaleness() {
                     lv_img_set_src(r.batteryIcon, &ui_img_battery_disabled_png);
                     lv_img_set_src(r.relicIcon, &ui_img_lantern_disabled_png);
 
-                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
                 } else {
-                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
             }
             for (auto &r : luxes) {
@@ -395,9 +395,9 @@ void checkStaleness() {
 
                     lv_obj_add_flag(r.wheelIcon, LV_OBJ_FLAG_HIDDEN);
 
-                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
                 } else {
-                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0xDDDDDD), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
             }
             lvgl_port_unlock();
@@ -464,7 +464,7 @@ void ui_update_lantern_status(Lantern* lantern, int batt_mv, int rssi_dbm, char*
         lv_img_set_src(lantern->relicIcon, pick_lantern_icon(on));
         lantern->on = on;
 
-        lv_obj_set_style_bg_color(lantern->mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(lantern->mainButton, lv_color_hex(0xDDDDDD), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lvgl_port_unlock();
     }
@@ -567,7 +567,7 @@ void ui_update_lux_status(LuxArcana* lux, int batt_mv, int rssi_dbm, char* statu
         uint8_t b = fStatB*255/0.45;
         uint8_t w = fStatW*255/0.45;
 
-        lv_obj_set_style_bg_color(lux->mainButton, lv_color_hex(0xDDDDDD), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(lux->mainButton, lv_color_hex(0xDDDDDD), (lv_style_selector_t)LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_img_set_src(lux->relicIcon, &ui_img_gem_transparent_png);
         lv_img_set_src(lux->networkIcon, pick_wifi_icon(rssi_dbm));
         lv_img_set_src(lux->batteryIcon, pick_lux_battery_icon(batt_mv));
@@ -576,8 +576,7 @@ void ui_update_lux_status(LuxArcana* lux, int batt_mv, int rssi_dbm, char* statu
         lv_colorwheel_set_rgb(lux->wheelIcon, colorRgb);
         lv_obj_clear_flag(lux->wheelIcon, LV_OBJ_FLAG_HIDDEN);
 
-
-        lv_obj_set_style_bg_color(lux->relicIcon, colorRgb, LV_PART_MAIN);//div by 0.45 because that happens at the lux side, we should actually fix the value that is send on the lux side
+        lv_obj_set_style_bg_color(lux->relicIcon, colorRgb, LV_PART_MAIN);
         lv_obj_set_style_bg_opa(lux->relicIcon, LV_OPA_COVER, LV_PART_MAIN);
 
         lvgl_port_unlock();
@@ -628,8 +627,7 @@ void console_append(const String& msg) {
 
     // Update LVGL label
     if (lvgl_port_lock(-1)) {
-        // lv_label_set_long_mode(CONSOLE_LABEL, LV_LABEL_LONG_WRAP);
-        lv_obj_set_width(CONSOLE_LABEL, lv_obj_get_width(CONSOLE_LABEL)); // ensures wrapping uses current width
+//        lv_obj_set_width(CONSOLE_LABEL, lv_obj_get_width(CONSOLE_LABEL)); // ensures wrapping uses current width
         lv_label_set_text(CONSOLE_LABEL, consoleBuffer);
         lvgl_port_unlock();
     }
