@@ -38,9 +38,6 @@ LV_IMG_DECLARE(ui_img_wifi_40_60_png);
 LV_IMG_DECLARE(ui_img_wifi_60_80_png);   
 LV_IMG_DECLARE(ui_img_wifi_80_100_png);  
 
-// LV_IMG_DECLARE(ui_img_golem_base_png);   
-// LV_IMG_DECLARE(ui_golem_off_png);   
-// LV_IMG_DECLARE(ui_golem_on_png);  
 
 
 // Your device's unique ID
@@ -106,9 +103,13 @@ static const RelicRef RELIC_REFS[] = {
     { "lantern_22", "LANTERN22", &uic_Lantern22Button, &uic_Lantern22Label, &uic_Network22Icon, &uic_Battery22Icon, &uic_Lantern22Icon, nullptr},
     { "lantern_23", "LANTERN23", &uic_Lantern23Button, &uic_Lantern23Label, &uic_Network23Icon, &uic_Battery23Icon, &uic_Lantern23Icon, nullptr},
     { "lantern_24", "LANTERN24", &uic_Lantern24Button, &uic_Lantern24Label, &uic_Network24Icon, &uic_Battery24Icon, &uic_Lantern24Icon, nullptr},
+    { "lux_1", "LUX1", &uic_Lux1Button, &uic_Lux1Label, &uic_Network1Icon, &uic_Battery1Icon, &uic_Lux1Icon, &uic_Colorwheel1},
     { "lux_2", "LUX2", &uic_Lux2Button, &uic_Lux2Label, &uic_Network2Icon, &uic_Battery2Icon, &uic_Lux2Icon, &uic_Colorwheel2},
     { "lux_3", "LUX3", &uic_Lux3Button, &uic_Lux3Label, &uic_Network3Icon, &uic_Battery3Icon, &uic_Lux3Icon, &uic_Colorwheel3},
     { "lux_4", "LUX4", &uic_Lux4Button, &uic_Lux4Label, &uic_Network4Icon, &uic_Battery4Icon, &uic_Lux4Icon, &uic_Colorwheel4},
+    { "lux_5", "LUX5", &uic_Lux5Button, &uic_Lux5Label, &uic_Network5Icon, &uic_Battery5Icon, &uic_Lux5Icon, &uic_Colorwheel5},
+    { "lux_6", "LUX6", &uic_Lux6Button, &uic_Lux6Label, &uic_Network6Icon, &uic_Battery6Icon, &uic_Lux6Icon, &uic_Colorwheel6},
+    { "lux_7", "LUX7", &uic_Lux7Button, &uic_Lux7Label, &uic_Network7Icon, &uic_Battery7Icon, &uic_Lux7Icon, &uic_Colorwheel7},
 };
 
 static Lantern lanterns[] = {
@@ -129,9 +130,13 @@ static Lantern lanterns[] = {
 };
 
 static LuxArcana luxes[] = {
+    { "lux_1", "LUX1", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
     { "lux_2", "LUX2", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
     { "lux_3", "LUX3", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
     { "lux_4", "LUX4", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
+    { "lux_5", "LUX5", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
+    { "lux_6", "LUX6", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
+    { "lux_7", "LUX7", 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0},
 };
 
 #define CONSOLE_LABEL uic_Console
@@ -140,8 +145,6 @@ static const int CONSOLE_MAX_CHARS = 2048;    // total buffer size
 
 static char consoleBuffer[CONSOLE_MAX_CHARS] = "";
 static int consoleLineCount = 0;
-
-bool golemIn = false;
 
 static void debug_begin(unsigned long baud) {
     Serial.begin(baud);
@@ -230,31 +233,83 @@ static void on_lux_button_event(lv_event_t* e) {
 
 
 
-void setColorFromScreen2(lv_event_t * e) {
+void setColorLux1(lv_event_t * e) {
+    lv_obj_t * cw = lv_event_get_target(e);
+    lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+    arcanet.sendCommand("LUX1", "SET_HUE_"+String(hsv.h));
+}
+void setColorLux2(lv_event_t * e) {
     lv_obj_t * cw = lv_event_get_target(e);
     lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
     arcanet.sendCommand("LUX2", "SET_HUE_"+String(hsv.h));
-
 }
-void setColorFromScreen3(lv_event_t * e) {
+void setColorLux3(lv_event_t * e) {
     lv_obj_t * cw = lv_event_get_target(e);
     lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
     arcanet.sendCommand("LUX3", "SET_HUE_"+String(hsv.h));
-
 }
-void setColorFromScreen4(lv_event_t * e) {
+void setColorLux4(lv_event_t * e) {
     lv_obj_t * cw = lv_event_get_target(e);
     lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
     arcanet.sendCommand("LUX4", "SET_HUE_"+String(hsv.h));
 }
+void setColorLux5(lv_event_t * e) {
+    lv_obj_t * cw = lv_event_get_target(e);
+    lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+    arcanet.sendCommand("LUX5", "SET_HUE_"+String(hsv.h));
+}
+void setColorLux6(lv_event_t * e) {
+    lv_obj_t * cw = lv_event_get_target(e);
+    lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+    arcanet.sendCommand("LUX6", "SET_HUE_"+String(hsv.h));
+}
+void setColorLux7(lv_event_t * e) {
+    lv_obj_t * cw = lv_event_get_target(e);
+    lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+    arcanet.sendCommand("LUX7", "SET_HUE_"+String(hsv.h));
+}
 
-void setBrightness4(lv_event_t * e) {
+
+void setBrightnessLux1(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX1", "SET_BRIGHTNESS_"+String(val));
+}
+void setBrightnessLux2(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX2", "SET_BRIGHTNESS_"+String(val));
+}
+void setBrightnessLux3(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX3", "SET_BRIGHTNESS_"+String(val));
+}
+void setBrightnessLux4(lv_event_t * e) {
     lv_obj_t * slider = lv_event_get_target(e);
     int val = lv_slider_get_value(slider);
     arcanet.sendCommand("LUX4", "SET_BRIGHTNESS_"+String(val));
 }
+void setBrightnessLux5(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX5", "SET_BRIGHTNESS_"+String(val));
+}
+void setBrightnessLux6(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX6", "SET_BRIGHTNESS_"+String(val));
+}
+void setBrightnessLux7(lv_event_t * e) {
+    lv_obj_t * slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    arcanet.sendCommand("LUX7", "SET_BRIGHTNESS_"+String(val));
+}
 
 
+void setToBlack1(lv_event_t * e) {
+    arcanet.sendCommand("LUX1", "BLACK_ON");
+}
 void setToBlack2(lv_event_t * e) {
     arcanet.sendCommand("LUX2", "BLACK_ON");
 }
@@ -264,13 +319,17 @@ void setToBlack3(lv_event_t * e) {
 void setToBlack4(lv_event_t * e) {
     arcanet.sendCommand("LUX4", "BLACK_ON");
 }
-void activateGolemInSequence(lv_event_t * e) {
-    arcanet.sendCommand("CONSOLE71", "PRESSEDGOLEMIN");
+void setToBlack5(lv_event_t * e) {
+    arcanet.sendCommand("LUX5", "BLACK_ON");
+}
+void setToBlack6(lv_event_t * e) {
+    arcanet.sendCommand("LUX6", "BLACK_ON");
+}
+void setToBlack7(lv_event_t * e) {
+    arcanet.sendCommand("LUX7", "BLACK_ON");
 }
 
-void activateGolemOutSequence(lv_event_t * e) {
-    arcanet.sendCommand("CONSOLE71", "PRESSEDGOLEMOUT");
-}
+
 
 
 void setup() {
@@ -525,18 +584,6 @@ int ui_apply_status_string(const char *msg) {
     if (lantern) {
         ui_update_lantern_status(lantern, mv, rssi, status1);
         lantern->lastUpdate = millis();
-    } else if (sStatus1=="GOLEMIN") {
-        lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_on_png);
-        golemIn = true;
-    } else if (sStatus1=="GOLEMOUT") {
-        lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_on_png);
-        golemIn = false;
-    } else if (sStatus1=="GOLEMRDY") {
-        if (golemIn) {
-            lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_base_png);
-        } else {
-            lv_img_set_src(uic_GemGlyph71Icon, &ui_img_golem_off_png);
-        }
     } else {
         if (!status2 ||!status3 || !status4) return -2;
 

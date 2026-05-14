@@ -11,11 +11,11 @@ const uint8_t PIN_BATTERY        = 1;
 //GPIO of Lantern control pin
 const uint8_t PIN_LANTERN        = 22;
 const int     freq               = 500;  // 0.5kHz frequency
-const int     resolution         = 8;     // 8-bit resolution (0-255)
+const int     resolution         = 10;     // 8-bit resolution (0-255)
 const int     PWM_MAX            = (1 << resolution) - 1;
 
-#define DATA_PIN       5
-#define LED_TYPE       WS2812
+#define DATA_PIN       23
+#define LED_TYPE       WS2812B
 #define COLOR_ORDER    GRB
 #define NUM_LEDS       4
 
@@ -32,6 +32,11 @@ boolean relicStatus = false;
 int16_t  hue            = 0;
 
 uint32_t now            = millis();
+uint32_t start          = millis();
+
+const double amplitude = 80.0;
+const double period_milli_seconds = 30000.0;
+
 
 // Callback function to handle received commands
 void onCommandReceived(const String& id, const String& msg) {
@@ -89,8 +94,26 @@ void setup() {
     initCandleLogic();
 
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-    FastLED.setBrightness(255);
-    FastLED.clear(true);
+    fill_solid(leds, NUM_LEDS, CRGB::Red);
+    FastLED.setBrightness(100);
+    FastLED.show();
+    ledcWrite(PIN_LANTERN, 100);
+    delay(250);
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+    ledcWrite(PIN_LANTERN, 0);
+    FastLED.show();
+    delay(250);
+    fill_solid(leds, NUM_LEDS, CRGB::Red);
+    ledcWrite(PIN_LANTERN, 100);
+    FastLED.setBrightness(100);
+    FastLED.show();
+    delay(250);
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+    ledcWrite(PIN_LANTERN, 0);
+    FastLED.show();
+    delay(250);
+
+    start = millis();
 
 }
 
@@ -104,7 +127,21 @@ void loop() {
     readSerial();//any commands from outside (TODO: put this behind a compile time switch)
     serviceFor(10);
 
-    fill_solid(leds, NUM_LEDS, CRGB::Red);
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+    CHSV c(0, 255, 255);
+
+    bool firstPairActive = ((now - start) / 5000) % 2 == 0;//0..4999 ms -> 0, 5000..9999 ms -> 1, so with the % 2 (modulo 2) even numbers are true
+    if (firstPairActive) {
+        leds[0] = c;
+        leds[2] = c;
+    } else {
+        leds[1] = c;
+        leds[3] = c;
+    }
+    
+    double value = 100 + amplitude * std::sin(2.0 * 3.1415926 * (now-start) / period_milli_seconds);
+    FastLED.setBrightness(value);
+    FastLED.show();
 
 }
 

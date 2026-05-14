@@ -7,7 +7,7 @@ ESP32 ESP-NOW mini mesh with discovery, deduplication, hop-limited relaying, and
 - Peer auto-add on discovery
 - Message deduplication (ring buffer)
 - Hop-limited relaying
-- Serial CLI: `<id>_<command>` (e.g., `12_LANTERN_ON`)
+- Serial CLI: `<id>_<command>` (e.g., `LANTERN12_ON`)
 - Commands (example): `LANTERN_ON/OFF`, `WHITE|RED|GREEN|BLUE_ON/OFF`, `ON/OFF` (builtin LED)
 
 ## Install

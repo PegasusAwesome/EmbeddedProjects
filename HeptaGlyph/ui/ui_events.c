@@ -4,46 +4,173 @@
 // Project name: SquareLine_Project
 
 #include "ui.h"
-void setColorFromScreen2(lv_event_t * e)
+
+#if defined(__GNUC__)
+#define UI_EVENT_WEAK __attribute__((weak))
+#else
+#define UI_EVENT_WEAK
+#endif
+
+void UI_EVENT_WEAK setEasterEgg(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setColorFromScreen3(lv_event_t * e)
+void UI_EVENT_WEAK setColorFromScreen2(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setColorFromScreen4(lv_event_t * e)
+void UI_EVENT_WEAK setColorFromScreen3(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setToBlack2(lv_event_t * e)
+void UI_EVENT_WEAK setColorFromScreen4(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setToBlack3(lv_event_t * e)
+void UI_EVENT_WEAK setToBlack2(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setToBlack4(lv_event_t * e)
+void UI_EVENT_WEAK setToBlack3(lv_event_t * e)
 {
 	// Your code here
 }
 
-void activateGolemInSequence(lv_event_t * e)
-{
-	// Your code here
-}
-void activateGolemOutSequence(lv_event_t * e)
+void UI_EVENT_WEAK setToBlack4(lv_event_t * e)
 {
 	// Your code here
 }
 
-void setBrightness4(lv_event_t * e)
+void UI_EVENT_WEAK activateGolemInSequence(lv_event_t * e)
+{
+	// Your code here
+}
+void UI_EVENT_WEAK activateGolemOutSequence(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness4(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setToBlack1(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux1(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness1(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux2(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness2(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux3(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness3(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux4(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setToBlack5(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux5(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness5(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setToBlack6(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux6(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightness6(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setToBlack7(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux1(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux2(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux3(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux4(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux5(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux6(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setColorLux7(lv_event_t * e)
+{
+	// Your code here
+}
+
+void UI_EVENT_WEAK setBrightnessLux7(lv_event_t * e)
 {
 	// Your code here
 }

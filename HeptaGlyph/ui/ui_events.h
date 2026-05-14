@@ -10,16 +10,28 @@
 extern "C" {
 #endif
 
-void setToBlack2(lv_event_t * e);
-void setColorFromScreen2(lv_event_t * e);
-void setToBlack3(lv_event_t * e);
-void setColorFromScreen3(lv_event_t * e);
-void setToBlack4(lv_event_t * e);
-void setColorFromScreen4(lv_event_t * e);
 void setEasterEgg(lv_event_t * e);
-void activateGolemInSequence(lv_event_t * e);
-void activateGolemOutSequence(lv_event_t * e);
-void setBrightness4(lv_event_t * e);
+void setToBlack1(lv_event_t * e);
+void setColorLux1(lv_event_t * e);
+void setBrightnessLux1(lv_event_t * e);
+void setToBlack2(lv_event_t * e);
+void setColorLux2(lv_event_t * e);
+void setBrightnessLux2(lv_event_t * e);
+void setToBlack3(lv_event_t * e);
+void setColorLux3(lv_event_t * e);
+void setBrightnessLux3(lv_event_t * e);
+void setToBlack4(lv_event_t * e);
+void setColorLux4(lv_event_t * e);
+void setBrightnessLux4(lv_event_t * e);
+void setToBlack5(lv_event_t * e);
+void setColorLux5(lv_event_t * e);
+void setBrightnessLux5(lv_event_t * e);
+void setToBlack6(lv_event_t * e);
+void setColorLux6(lv_event_t * e);
+void setBrightnessLux6(lv_event_t * e);
+void setToBlack7(lv_event_t * e);
+void setColorLux7(lv_event_t * e);
+void setBrightnessLux7(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

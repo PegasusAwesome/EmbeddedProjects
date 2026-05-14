@@ -2,12 +2,12 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "DOWSER31";
+const String MY_ID = "DOWSER32";
 
 #define MOTOR_PIN     1
  
 unsigned long updateScheduledAt  = 0;
-uint32_t tUpdatePeriod = 10000;
+uint32_t tUpdatePeriod = 1000;
 boolean pendingUpdate = false;
 
 uint32_t tLastBlinkOn  = 0;
@@ -21,6 +21,14 @@ bool motorState = false;
 unsigned long lastSignal = 0;
 
 uint32_t now            = millis();
+
+static bool timeReached(unsigned long now, unsigned long scheduledAt) {
+    return (long)(now - scheduledAt) >= 0;
+}
+
+static bool elapsedAtLeast(unsigned long now, unsigned long startedAt, unsigned long intervalMs) {
+    return (unsigned long)(now - startedAt) >= intervalMs;
+}
 
 //more sinusy
 //use onCommandReceived?
@@ -55,7 +63,7 @@ void setup() {
     randomSeed(esp_random());
 
     Serial.println("####################################");
-    Serial.println("### Dowsers setup complete ###");
+    Serial.println("### Dowsers setup complete       ###");
     Serial.println("####################################");
     Serial.println("My ID is: "+String(MY_ID));
 
@@ -76,7 +84,6 @@ void loop() {
     updateMotorFromRssiPulse(arcanet.getBestRssi());
 
     delay(10);
-
 }
 
 void setMotor(int strength) {
@@ -142,7 +149,7 @@ void updateMotorFromRssiPulse(int rssi) {
   } 
 
 
-  if (now - lastPulse >= (unsigned long) interval && ((lastSignal+5000) > millis()) ) {
+  if (elapsedAtLeast(now, lastPulse, (unsigned long)interval) && !elapsedAtLeast(now, lastSignal, 5000UL)) {
 
     lastPulse = now;
     motorState = true;
@@ -191,7 +198,7 @@ void updateMotorFromRssiPulse(int rssi) {
   }
 
   // pulse duration
-  if (motorState && now - lastPulse > pulseWidth) {
+  if (motorState && elapsedAtLeast(now, lastPulse, (unsigned long)(pulseWidth + 1))) {
     motorState = false;
     setMotor(0);
   }
@@ -200,20 +207,20 @@ void updateMotorFromRssiPulse(int rssi) {
 
 
 void updateControllers() {
-    if ( now > updateScheduledAt + tUpdatePeriod) {
+    if (elapsedAtLeast(now, updateScheduledAt, tUpdatePeriod + 1UL)) {
         prepareUpdate();
     }
 }
 
 
 void blink() {
-    if (now > tBlinkPeriod + tLastBlinkOn) {
+    if (elapsedAtLeast(now, tLastBlinkOn, tBlinkPeriod + 1UL)) {
         tLastBlinkOn  = now;
         tLastBlinkOff = now + tBlinkTime;
         digitalWrite(LED_BUILTIN, LOW);
     }
 
-    if (now > tLastBlinkOff) {
+    if (elapsedAtLeast(now, tLastBlinkOff, 1UL)) {
         digitalWrite(LED_BUILTIN, HIGH);
     }
 }
@@ -248,45 +255,9 @@ void prepareUpdateNow() {
 }
 
 void sendUpdate() {
-    if (pendingUpdate && millis() >= updateScheduledAt) {
+    if (pendingUpdate && timeReached(millis(), updateScheduledAt)) {
         pendingUpdate = false;
         int v_batt = 999;
-        arcanet.sendCommand("DOWSER32", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_" + "ON" );
+        arcanet.sendCommand("DOWSER31", MY_ID+"_"+"BLVL_"+String(v_batt)+"_SGNL_"+String(arcanet.getBestRssi())+"_STATE_" + "ON" );
     }
-}
-
-
-
-
-
-
-//////
-
-void updateMotorFromRssiPulse_OLD(int rssi) {
-  filteredRssi = 0.8 * filteredRssi + 0.2 * rssi;
-
-  unsigned long now = millis();
-
-  if (filteredRssi <= -128) {
-    setMotor(0);
-    return;
-  }
-
-  int strength = map((int)filteredRssi, -93, -35, 60, 255);
-  strength = constrain(strength, 60, 255);
-
-  int interval = map((int)filteredRssi, -93, -35, 4000, 130);
-  interval = constrain(interval, 160, 4000);
-
-  if (now - lastPulse >= (unsigned long) interval && ((lastSignal+5000) > millis()) ) {
-    lastPulse = now;
-    motorState = true;
-    setMotor(strength);
-  }
-
-  // pulse duration
-  if (motorState && now - lastPulse > 100) {
-    motorState = false;
-    setMotor(0);
-  }
 }

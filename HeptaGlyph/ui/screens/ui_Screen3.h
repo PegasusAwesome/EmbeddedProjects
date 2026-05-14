@@ -13,15 +13,20 @@ extern "C" {
 // SCREEN: ui_Screen3
 extern void ui_Screen3_screen_init(void);
 extern void ui_Screen3_screen_destroy(void);
-extern void ui_event_Screen3(lv_event_t * e);
 extern lv_obj_t * ui_Screen3;
+extern lv_obj_t * ui_Container7;
+extern lv_obj_t * ui_Container10;
+extern void ui_event_Button10(lv_event_t * e);
+extern lv_obj_t * ui_Button10;
+extern lv_obj_t * ui_Label4;
+extern void ui_event_Button6(lv_event_t * e);
+extern lv_obj_t * ui_Button6;
+extern lv_obj_t * ui_Label5;
 extern lv_obj_t * ui_Container3;
-extern lv_obj_t * ui_LuxConsoleButton;
 extern lv_obj_t * ui_Console;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_Screen3;
 extern lv_obj_t * uic_Container3;
-extern lv_obj_t * uic_LuxConsoleButton;
 extern lv_obj_t * uic_Console;
 
 #ifdef __cplusplus

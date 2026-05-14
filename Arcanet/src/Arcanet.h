@@ -6,12 +6,13 @@
 #include <esp_now.h>
 
 // Callback function type for handling received messages
-typedef void (*message_callback_t)(const String& id, const String& command);
+typedef void (*message_callback_t)(const char* id, const char* command);
+typedef void (*legacy_string_message_callback_t)(const String& id, const String& command);
 
 // Default compile-time configuration values
 // You can override these by defining them before including this header
 #ifndef ARCANET_MAX_PEERS
-#define ARCANET_MAX_PEERS 30
+#define ARCANET_MAX_PEERS 32
 #endif
 
 #ifndef ARCANET_DEDUPE_SIZE
@@ -19,7 +20,7 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 #endif
 
 #ifndef ARCANET_DISCOVERY_INTERVAL_MS
-#define ARCANET_DISCOVERY_INTERVAL_MS 15000UL
+#define ARCANET_DISCOVERY_INTERVAL_MS 60000UL
 #endif
 
 #ifndef ARCANET_MAX_HOPS
@@ -27,19 +28,27 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 #endif
 
 #ifndef ARCANET_SEND_QUEUE_SIZE
-#define ARCANET_SEND_QUEUE_SIZE 16
+#define ARCANET_SEND_QUEUE_SIZE 32
 #endif
 
 #ifndef ARCANET_MAX_SENDS_PER_LOOP
-#define ARCANET_MAX_SENDS_PER_LOOP 3
+#define ARCANET_MAX_SENDS_PER_LOOP 2
 #endif
 
 #ifndef ARCANET_MIN_SEND_GAP_MS
-#define ARCANET_MIN_SEND_GAP_MS 7
+#define ARCANET_MIN_SEND_GAP_MS 12
 #endif
 
 #ifndef ARCANET_RECV_QUEUE_SIZE
-#define ARCANET_RECV_QUEUE_SIZE 16
+#define ARCANET_RECV_QUEUE_SIZE 32
+#endif
+
+#ifndef ARCANET_RX_FRAME_QUEUE_SIZE
+#define ARCANET_RX_FRAME_QUEUE_SIZE 32
+#endif
+
+#ifndef ARCANET_PEER_TIMEOUT_MS
+#define ARCANET_PEER_TIMEOUT_MS (ARCANET_DISCOVERY_INTERVAL_MS * 3UL)
 #endif
 
 
@@ -48,8 +57,15 @@ typedef void (*message_callback_t)(const String& id, const String& command);
 
 class Arcanet {
 public:
+  struct PeerInfo {
+    char id[24];
+    int rssi;
+    unsigned long ageMs;
+  };
+
   // Constructor
   Arcanet(String id, message_callback_t callback);
+  Arcanet(String id, legacy_string_message_callback_t callback);
 
   // Initialize the network
   void init();
@@ -65,13 +81,19 @@ public:
 
   // Best (maximum) RSSI observed recently, in dBm.
   // Use a signed integer return type to avoid unsigned wrap-around.
-  static int getBestRssi();
+  int getBestRssi() const;
 
   void processSendQueue();
 
+  void setRssiWindowSize(uint8_t size);
+  uint8_t getRssiWindowSize() const;
+
+  uint8_t getTopPeersByRssi(PeerInfo* peers, uint8_t maxPeers) const;
 
 private:
-  // Message structure (packed to minimize airtime and avoid padding issues)
+  static constexpr uint8_t RSSI_WINDOW_MAX_SIZE = 20;
+
+  // Message structure (packed to minimize airtime and avoid padding issues) 134 bytes
   struct __attribute__((packed)) struct_message {
     char type;              // 'D' = discovery, 'C' = command
     char id[24];            // target id (for commands)
@@ -108,6 +130,20 @@ private:
     char command[64];
   };
 
+  struct RxFrame {
+    struct_message msg;
+    uint8_t senderMac[6];
+    int8_t rssi;
+  };
+
+  volatile uint16_t _xqHead;
+  volatile uint16_t _xqTail;
+  volatile uint16_t _xqCount;
+  RxFrame _rxQ[ARCANET_RX_FRAME_QUEUE_SIZE];
+
+  bool enqueueRxFrame(const struct_message& msg, const uint8_t* senderMac, int8_t rssi);
+  void processRxFrames();
+
   volatile uint16_t _rqHead;
   volatile uint16_t _rqTail;
   volatile uint16_t _rqCount;
@@ -117,11 +153,21 @@ private:
   void processRecvQueue();
 
   //***** Peer management *****
-  void addPeer(const uint8_t* mac, const String& id);
   void addPeer(const uint8_t* mac, const char* id);
   bool isKnownPeer(const uint8_t* mac);
+  int findPeerIndex(const uint8_t* mac);
+  void touchPeer(const uint8_t* mac, const char* id = nullptr);
+  void updatePeerRssi(const uint8_t* mac, int8_t rssi);
+  void agePeers();
+  void removePeerAt(int index);
+
+  // Lookup helper to resolve a peer's human-readable id from its MAC address
+  const char* lookupPeerId(const uint8_t* mac);
+
 
   void rssiPush(int8_t rssi);
+
+  uint8_t _rssiWindowSize;
 
   // Broadcasting
   void broadcastDiscovery();
@@ -158,13 +204,20 @@ private:
   String _id;
   uint8_t _myMac[6];
   message_callback_t _callback;
+  legacy_string_message_callback_t _legacyStringCallback;
   uint8_t _knownPeers[ARCANET_MAX_PEERS][6];
+  char _peerIds[ARCANET_MAX_PEERS][24];
+  int8_t _peerRssi[ARCANET_MAX_PEERS];
+  unsigned long _peerLastSeenMs[ARCANET_MAX_PEERS];
   int _peerCount;
   unsigned long _lastBroadcastTime;
   DedupeEntry _dedupeBuf[ARCANET_DEDUPE_SIZE];
   int _dedupeHead;
   int _bestRssi; // max RSSI seen
   int _lastRssi; // last RSSI seen
+  int8_t _rssiWindow[RSSI_WINDOW_MAX_SIZE];
+  uint8_t _rssiCount;   // number of samples accumulated so far (<= RSSI_WINDOW_MAX_SIZE)
+  uint8_t _rssiHead;    // next write index, 0..RSSI_WINDOW_MAX_SIZE-1
   uint8_t _channel; // 0 = current, else fixed channel
 
   // Singleton instance

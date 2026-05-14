@@ -22,10 +22,13 @@ static portMUX_TYPE s_rqMux = portMUX_INITIALIZER_UNLOCKED;
 static portMUX_TYPE s_dedupeMux = portMUX_INITIALIZER_UNLOCKED;
 static portMUX_TYPE s_xqMux = portMUX_INITIALIZER_UNLOCKED;
 
-static constexpr int RSSI_WINDOW_MAX_SIZE = 20;
-int8_t _rssiWindow[RSSI_WINDOW_MAX_SIZE];
-int _rssiCount;   // number of samples accumulated so far (<= 20)
-int _rssiHead;    // next write index, 0..19
+static bool timeReached(unsigned long now, unsigned long scheduledAt) {
+    return (long)(now - scheduledAt) >= 0;
+}
+
+static bool elapsedAtLeast(unsigned long now, unsigned long startedAt, unsigned long intervalMs) {
+    return (unsigned long)(now - startedAt) >= intervalMs;
+}
 
 
 Arcanet* Arcanet::_instance = nullptr;
@@ -53,8 +56,11 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
     _xqCount = 0;
     _lastSendMs = 0;
     _rssiWindowSize = 20;
+    _rssiCount = 0;
+    _rssiHead = 0;
 
     for (uint8_t i = 0; i < RSSI_WINDOW_MAX_SIZE; ++i) _rssiWindow[i] = -127;
+    for (int i = 0; i < ARCANET_MAX_PEERS; ++i) _peerLastSeenMs[i] = 0;
 }
 
 Arcanet::Arcanet(String id, legacy_string_message_callback_t callback) {
@@ -79,8 +85,11 @@ Arcanet::Arcanet(String id, legacy_string_message_callback_t callback) {
     _xqCount = 0;
     _lastSendMs = 0;
     _rssiWindowSize = 20;
+    _rssiCount = 0;
+    _rssiHead = 0;
 
     for (uint8_t i = 0; i < RSSI_WINDOW_MAX_SIZE; ++i) _rssiWindow[i] = -127;
+    for (int i = 0; i < ARCANET_MAX_PEERS; ++i) _peerLastSeenMs[i] = 0;
 }
 
 void Arcanet::init() {
@@ -146,11 +155,13 @@ void Arcanet::init() {
 }
 
 void Arcanet::loop() {
-    if (millis() - _lastBroadcastTime > ARCANET_DISCOVERY_INTERVAL_MS) {
-        _lastBroadcastTime = millis();
+    unsigned long now = millis();
+    if (elapsedAtLeast(now, _lastBroadcastTime, ARCANET_DISCOVERY_INTERVAL_MS)) {
+        _lastBroadcastTime = now;
         broadcastDiscovery();
     }
     processRxFrames();
+    agePeers();
     processRecvQueue();
     processSendQueue();
 }
@@ -181,7 +192,6 @@ void Arcanet::sendCommand(const String& id, const String& command) {
 
 
 void Arcanet::broadcastDiscovery() {
-Serial.println("broadcastDiscovery");
     struct_message msg = {};
     msg.type = 'D';
     _id.toCharArray(msg.originId, sizeof(msg.originId));
@@ -296,8 +306,8 @@ bool Arcanet::isBroadcastMac(const uint8_t* mac) {
     return true;
 }
 
-int Arcanet::getBestRssi() {
-    return _instance->_bestRssi;
+int Arcanet::getBestRssi() const {
+    return _bestRssi;
 }
 
 void Arcanet::rssiPush(int8_t rssi) {
@@ -369,12 +379,12 @@ void Arcanet::processSendQueue() {
     taskEXIT_CRITICAL(&s_sqMux);
 
     // Wait for scheduled time (keeps order simple)
-    if (item.notBeforeMs > now) {
+    if (!timeReached(now, item.notBeforeMs)) {
       break;
     }
 
     // Rate limit a bit to let the WiFi task breathe
-    if (_lastSendMs && (now - _lastSendMs) < ARCANET_MIN_SEND_GAP_MS) {
+    if (_lastSendMs && !elapsedAtLeast(now, _lastSendMs, ARCANET_MIN_SEND_GAP_MS)) {
       break;
     }
 
@@ -467,6 +477,8 @@ void Arcanet::processRxFrames() {
       continue;
     }
 
+    touchPeer(sender_mac);
+
     const char* relayId = lookupPeerId(sender_mac);
     ARC_LOGF("Received command %s, from originId: %s, via relayId: %s, for id: %s\n", msg.command, msg.originId, (relayId ? relayId : "unknown"), msg.id);
 
@@ -519,11 +531,17 @@ void Arcanet::processRecvQueue() {
 
 
 void Arcanet::addPeer(const uint8_t* mac, const char* originId) {
-    if (_peerCount >= ARCANET_MAX_PEERS) {
+    if (sameMac(mac, _myMac)) {
         return;
     }
 
-    if (isKnownPeer(mac)) {
+    int existingIndex = findPeerIndex(mac);
+    if (existingIndex >= 0) {
+        touchPeer(mac, originId);
+        return;
+    }
+
+    if (_peerCount >= ARCANET_MAX_PEERS) {
         return;
     }
 
@@ -543,6 +561,7 @@ void Arcanet::addPeer(const uint8_t* mac, const char* originId) {
         } else {
             _peerIds[_peerCount][0] = '\0';
         }
+        _peerLastSeenMs[_peerCount] = millis();
 
         _peerCount++;
         ARC_LOGF("Added peer: %s\n", originId ? originId : "<null>");
@@ -554,12 +573,54 @@ void Arcanet::addPeer(const uint8_t* mac, const char* originId) {
 }
 
 bool Arcanet::isKnownPeer(const uint8_t* mac) {
+    return findPeerIndex(mac) >= 0;
+}
+
+int Arcanet::findPeerIndex(const uint8_t* mac) {
     for (int i = 0; i < _peerCount; i++) {
         if (memcmp(_knownPeers[i], mac, 6) == 0) {
-            return true;
+            return i;
         }
     }
-    return false;
+    return -1;
+}
+
+void Arcanet::touchPeer(const uint8_t* mac, const char* id) {
+    int index = findPeerIndex(mac);
+    if (index < 0) {
+        return;
+    }
+
+    _peerLastSeenMs[index] = millis();
+    if (id && id[0] != '\0') {
+        strncpy(_peerIds[index], id, sizeof(_peerIds[index]));
+        _peerIds[index][sizeof(_peerIds[index]) - 1] = '\0';
+    }
+}
+
+void Arcanet::agePeers() {
+    unsigned long now = millis();
+
+    for (int i = _peerCount - 1; i >= 0; --i) {
+        if (elapsedAtLeast(now, _peerLastSeenMs[i], ARCANET_PEER_TIMEOUT_MS)) {
+            removePeerAt(i);
+        }
+    }
+}
+
+void Arcanet::removePeerAt(int index) {
+    if (index < 0 || index >= _peerCount) {
+        return;
+    }
+    esp_now_del_peer(_knownPeers[index]);
+
+    for (int i = index; i < _peerCount - 1; ++i) {
+        memcpy(_knownPeers[i], _knownPeers[i + 1], sizeof(_knownPeers[i]));
+        memcpy(_peerIds[i], _peerIds[i + 1], sizeof(_peerIds[i]));
+        _peerLastSeenMs[i] = _peerLastSeenMs[i + 1];
+    }
+
+    _peerCount--;
 }
 
 

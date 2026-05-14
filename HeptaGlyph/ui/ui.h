@@ -45,12 +45,7 @@ LV_IMG_DECLARE(ui_img_wifi_60_80_png);    // assets/wifi_60_80.png
 LV_IMG_DECLARE(ui_img_battery_50_75_png);    // assets/battery_50_75.png
 LV_IMG_DECLARE(ui_img_wifi_80_100_png);    // assets/wifi_80_100.png
 LV_IMG_DECLARE(ui_img_battery_75_100_png);    // assets/battery_75_100.png
-LV_IMG_DECLARE(ui_img_golem_base_png);    // assets/golem_base.png
-LV_IMG_DECLARE(ui_img_golem_on_png);    // assets/golem_on.png
-LV_IMG_DECLARE(ui_img_gem_transparent_png);    // assets/gem_transparent.png
-LV_IMG_DECLARE(ui_img_gem_off_png);    // assets/gem_off.png
 LV_IMG_DECLARE(ui_img_gem_disabled_png);    // assets/gem_disabled.png
-LV_IMG_DECLARE(ui_img_golem_off_png);    // assets/golem_off.png
 
 // UI INIT
 void ui_init(void);
