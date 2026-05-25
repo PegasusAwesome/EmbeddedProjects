@@ -23,7 +23,7 @@ void ui_event_Button10(lv_event_t * e)
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_Screen1_screen_init);
+        _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_NONE, 500, 0, &ui_Screen1_screen_init);
     }
 }
 
@@ -32,7 +32,7 @@ void ui_event_Button6(lv_event_t * e)
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_Screen2_screen_init);
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_NONE, 500, 0, &ui_Screen2_screen_init);
     }
 }
 
@@ -117,11 +117,13 @@ void ui_Screen3_screen_init(void)
     ui_Console = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_Console, lv_pct(100));
     lv_obj_set_height(ui_Console, lv_pct(100));
+    lv_obj_set_x(ui_Console, 0);
+    lv_obj_set_y(ui_Console, 2);
     lv_obj_set_align(ui_Console, LV_ALIGN_BOTTOM_MID);
     lv_label_set_text(ui_Console, "Console");
     lv_obj_set_style_text_color(ui_Console, lv_color_hex(0x46FE20), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Console, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_Console, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Console, &ui_font_IBMPlexMono, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_Console, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_Console, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ui_Console, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

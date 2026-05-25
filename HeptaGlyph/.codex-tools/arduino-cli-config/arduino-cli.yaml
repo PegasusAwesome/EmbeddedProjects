@@ -1,0 +1,4 @@
+board_manager:
+    additional_urls: []
+directories:
+    user: C:\Users\Marcel\Documents\Arduino

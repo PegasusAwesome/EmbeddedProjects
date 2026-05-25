@@ -43,9 +43,10 @@ LV_IMG_DECLARE(ui_img_wifi_40_60_png);    // assets/wifi_40_60.png
 LV_IMG_DECLARE(ui_img_battery_25_50_png);    // assets/battery_25_50.png
 LV_IMG_DECLARE(ui_img_wifi_60_80_png);    // assets/wifi_60_80.png
 LV_IMG_DECLARE(ui_img_battery_50_75_png);    // assets/battery_50_75.png
-LV_IMG_DECLARE(ui_img_wifi_80_100_png);    // assets/wifi_80_100.png
-LV_IMG_DECLARE(ui_img_battery_75_100_png);    // assets/battery_75_100.png
-LV_IMG_DECLARE(ui_img_gem_disabled_png);    // assets/gem_disabled.png
+
+// FONTS
+LV_FONT_DECLARE(ui_font_IbmPlexMonoMediumItalic);
+LV_FONT_DECLARE(ui_font_IBMPlexMono);
 
 // UI INIT
 void ui_init(void);

@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 // Your device's unique ID
-const String MY_ID = "LUX4";
+const String MY_ID = "LUX2";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE = 2;  //D1 PT4115 DIM WHITE
@@ -14,7 +14,6 @@ const uint8_t DIM_PIN_RED   = 5;    //D4 PT4115 DIM RED
 
 const uint8_t DIM_PIN_BATTERY = 6;
 
-float brightness = 0.5;
 
 //not in use pins on the side of the RGBW pins
 // const uint8_t DIM_PIN_D0         = 1;   //
@@ -51,19 +50,22 @@ typedef struct {
 } hsv;
 
 
-rgbw relicStatus = { 0, 0, 0 };
+rgbw relicStatus = { 0, 0, 0, 0 };
+float brightness = 0.5;
 boolean ledUpdateNeeded = false;
 
 
 static float parseBrightnessFromCommand(const String& command) {
     unsigned v = 0;
-    if (sscanf(command.c_str(), "SET_BRIGHTNESS_%u", &v) != 1) return NAN;
+    char trailing = '\0';
+    if (sscanf(command.c_str(), "SET_BRIGHTNESS_%u%c", &v, &trailing) != 1) return NAN;
     return (float)v;
 }
 
 static float parseHueFromCommand(const String& command) {
     unsigned v = 0;
-    if (sscanf(command.c_str(), "SET_HUE_%u", &v) != 1) return NAN;
+    char trailing = '\0';
+    if (sscanf(command.c_str(), "SET_HUE_%u%c", &v, &trailing) != 1) return NAN;
     return (float)v;
 }
 
@@ -101,23 +103,38 @@ void onCommandReceived(const String& id, const String& command) {
     Serial.printf("Command received for ID: %s, Command: %s\n", id.c_str(), command.c_str());
 
     if (id == MY_ID || id == "LUXALL") {
+        boolean handled = false;
+
         if (command.startsWith("BLACK_ON")) {
             relicStatus.r = 0;
             relicStatus.g = 0;
             relicStatus.b = 0;
             relicStatus.w = 0;
+            handled = true;
         } else if (command.startsWith("SET_RGB")) {
             rgbw aRgbw = parseRGBFromCommand(command);
             setRgbw(aRgbw);
+            handled = true;
         } else if (command.startsWith("SET_HUE")) {
             float hue = parseHueFromCommand(command);
-            setHue(hue);
+            if (!isnan(hue)) {
+                setHue(hue);
+                handled = true;
+            }
         } else if (command.startsWith("SET_BRIGHTNESS")) {
             float value = parseBrightnessFromCommand(command);
-            setBrightness(value);
+            if (!isnan(value)) {
+                setBrightness(value);
+                handled = true;
+            }
         }
-        ledUpdateNeeded = true;
-        prepareControllerUpdateNow();
+
+        if (handled) {
+            ledUpdateNeeded = true;
+            prepareControllerUpdateNow();
+        } else {
+            Serial.printf("Ignored invalid command for ID: %s, Command: %s\n", id.c_str(), command.c_str());
+        }
     }
 }
 
@@ -267,12 +284,13 @@ static hsv rgbw2hsv(rgbw in) {
 static rgbw hsv2rgbw(hsv in) {
   double hh, p, q, t, ff;
   long i;
-  rgbw out;
+  rgbw out = { 0, 0, 0, 0 };
 
   if (in.s <= 0.0) {
     out.r = in.v;
     out.g = in.v;
     out.b = in.v;
+    out.w = 0;
     return out;
   }
 
@@ -349,16 +367,16 @@ void driveLedPWM(uint8_t pin, float value) {
 }
 
 void updateLeds(rgbw aRgbw) {
-    driveLedPWM(DIM_PIN_RED, relicStatus.r);
-    driveLedPWM(DIM_PIN_GREEN, relicStatus.g);
-    driveLedPWM(DIM_PIN_BLUE, relicStatus.b);
-    driveLedPWM(DIM_PIN_WHITE, relicStatus.w);
+    driveLedPWM(DIM_PIN_RED, aRgbw.r);
+    driveLedPWM(DIM_PIN_GREEN, aRgbw.g);
+    driveLedPWM(DIM_PIN_BLUE, aRgbw.b);
+    driveLedPWM(DIM_PIN_WHITE, aRgbw.w);
 }
 
 
 int getBatteryLevel() {
     int mv = analogReadMilliVolts(DIM_PIN_BATTERY);
-    mv = mv * 11.3;
+    mv = mv * 11.23;
     return mv;
 }
 
@@ -383,6 +401,6 @@ void sendUpdate() {
     if (pendingControllerUpdate && millis() >= controllerUpdateScheduledAt) {
         pendingControllerUpdate = false;
         int v_batt = getBatteryLevel();
-        arcanet.sendCommand("CONTROLLER", MY_ID + "_" + "BLVL_" + String(v_batt) + "_SGNL_" + String(arcanet.getBestRssi()) + "_STATE_" + String(relicStatus.r) + "_" + String(relicStatus.g) + "_" + String(relicStatus.b) + "_" + String(relicStatus.w));
+        arcanet.sendCommand("CONTROLLER", MY_ID + "_" + "BLVL_" + String(v_batt) + "_SGNL_" + String(arcanet.getBestRssi()) + "_STATE_" + String(relicStatus.r) + "_" + String(relicStatus.g) + "_" + String(relicStatus.b) + "_" + String(relicStatus.w)+ "_" + String(brightness));
     }
 }

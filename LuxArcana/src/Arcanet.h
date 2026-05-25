@@ -47,12 +47,22 @@ typedef void (*legacy_string_message_callback_t)(const String& id, const String&
 #define ARCANET_RX_FRAME_QUEUE_SIZE 32
 #endif
 
+#ifndef ARCANET_PEER_TIMEOUT_MS
+#define ARCANET_PEER_TIMEOUT_MS (ARCANET_DISCOVERY_INTERVAL_MS * 3UL)
+#endif
+
 
 
 
 
 class Arcanet {
 public:
+  struct PeerInfo {
+    char id[24];
+    int rssi;
+    unsigned long ageMs;
+  };
+
   // Constructor
   Arcanet(String id, message_callback_t callback);
   Arcanet(String id, legacy_string_message_callback_t callback);
@@ -71,14 +81,18 @@ public:
 
   // Best (maximum) RSSI observed recently, in dBm.
   // Use a signed integer return type to avoid unsigned wrap-around.
-  static int getBestRssi();
+  int getBestRssi() const;
 
   void processSendQueue();
 
   void setRssiWindowSize(uint8_t size);
   uint8_t getRssiWindowSize() const;
 
+  uint8_t getTopPeersByRssi(PeerInfo* peers, uint8_t maxPeers) const;
+
 private:
+  static constexpr uint8_t RSSI_WINDOW_MAX_SIZE = 20;
+
   // Message structure (packed to minimize airtime and avoid padding issues) 134 bytes
   struct __attribute__((packed)) struct_message {
     char type;              // 'D' = discovery, 'C' = command
@@ -141,6 +155,11 @@ private:
   //***** Peer management *****
   void addPeer(const uint8_t* mac, const char* id);
   bool isKnownPeer(const uint8_t* mac);
+  int findPeerIndex(const uint8_t* mac);
+  void touchPeer(const uint8_t* mac, const char* id = nullptr);
+  void updatePeerRssi(const uint8_t* mac, int8_t rssi);
+  void agePeers();
+  void removePeerAt(int index);
 
   // Lookup helper to resolve a peer's human-readable id from its MAC address
   const char* lookupPeerId(const uint8_t* mac);
@@ -188,12 +207,17 @@ private:
   legacy_string_message_callback_t _legacyStringCallback;
   uint8_t _knownPeers[ARCANET_MAX_PEERS][6];
   char _peerIds[ARCANET_MAX_PEERS][24];
+  int8_t _peerRssi[ARCANET_MAX_PEERS];
+  unsigned long _peerLastSeenMs[ARCANET_MAX_PEERS];
   int _peerCount;
   unsigned long _lastBroadcastTime;
   DedupeEntry _dedupeBuf[ARCANET_DEDUPE_SIZE];
   int _dedupeHead;
   int _bestRssi; // max RSSI seen
   int _lastRssi; // last RSSI seen
+  int8_t _rssiWindow[RSSI_WINDOW_MAX_SIZE];
+  uint8_t _rssiCount;   // number of samples accumulated so far (<= RSSI_WINDOW_MAX_SIZE)
+  uint8_t _rssiHead;    // next write index, 0..RSSI_WINDOW_MAX_SIZE-1
   uint8_t _channel; // 0 = current, else fixed channel
 
   // Singleton instance
