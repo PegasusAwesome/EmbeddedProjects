@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <title>Todoes</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Todoes">
+      <header class="app-header">
+        <h1>Todoes</h1>
+        <p id="statusLabel" class="status-label" aria-live="polite"></p>
+        <button id="addTodoButton" class="button button-primary button-square" type="button" aria-label="New todo" title="New todo">
+          +
+        </button>
+      </header>
+
+      <section id="todoList" class="todo-list" aria-label="Active todoes"></section>
+    </main>
+
+    <div id="editorOverlay" class="editor-overlay" hidden>
+      <form id="editorPanel" class="editor-panel">
+        <h2 id="editorTitle">New todo</h2>
+        <textarea id="editorTextarea" maxlength="80" placeholder="Todo title" required></textarea>
+        <div class="editor-actions">
+          <button id="cancelButton" class="button" type="button">Cancel</button>
+          <button class="button button-primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

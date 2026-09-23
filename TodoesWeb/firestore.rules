@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /todoLists/{listId} {
+      allow read: if listId == "main";
+      allow create, update: if listId == "main"
+        && request.resource.data.keys().hasOnly(["items", "nextId", "updatedAt"])
+        && request.resource.data.items is list
+        && request.resource.data.items.size() <= 80
+        && request.resource.data.nextId is int
+        && request.resource.data.nextId > 0;
+      allow delete: if false;
+    }
+  }
+}

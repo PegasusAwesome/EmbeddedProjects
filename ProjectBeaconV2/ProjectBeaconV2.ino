@@ -2,6 +2,7 @@
 #include "src/Arcanet.h"
 #include <FastLED.h>
 #include "driver/ledc.h"
+#include "esp_system.h"
 
 // Your device's unique ID
 const String MY_ID = "LANTERN30";
@@ -160,6 +161,8 @@ Arcanet arcanet(MY_ID, onCommandReceived);
 void setup() {
     Serial.begin(115200);
 
+    randomSeed(esp_random());
+
     // Init lantern led pin
     setupLanternPwm();
 
@@ -269,24 +272,12 @@ void sendUpdate() {
 
 // -------------------- Brightness tuning --------------------
 
-constexpr float BASE_BRIGHTNESS = 0.48f;   // average brightness, 0.0 .. 1.0
-constexpr float SLOW_AMOUNT_A   = 0.06f;   // slow body movement
-constexpr float SLOW_AMOUNT_B   = 0.08f;   // slow body movement
-constexpr float MEDIUM_AMOUNT_A = 0.030f;   // main flicker
-constexpr float MEDIUM_AMOUNT_B = 0.030f;   // main flicker
-constexpr float FAST_AMOUNT     = 0.03f;   // tiny shimmer
+constexpr float BASE_BRIGHTNESS = 0.38f;   // average brightness, 0.0 .. 1.0
 
-constexpr float MIN_BRIGHTNESS  = 0.20f;
+constexpr float MIN_BRIGHTNESS  = 0.10f;
 constexpr float MAX_BRIGHTNESS  = 1.00f;
 
-// -------------------- Time scales --------------------
-// Larger values make the noise evolve faster.
 
-constexpr float SLOW_SPEED_A = 0.115f;
-constexpr float SLOW_SPEED_B = 0.12f;
-constexpr float MEDIUM_SPEED_A = 0.295f;
-constexpr float MEDIUM_SPEED_B = 0.30f;
-constexpr float FAST_SPEED   = 1.000f;
 
 float clamp01(float x) {
     if (x < 0.0f) return 0.0f;
@@ -302,18 +293,81 @@ void writeBrightness(float brightness) {
 }
 
 // Compute candle brightness from layered noise
+static float noiseSigned(uint32_t x, uint32_t y) {
+    return (inoise16(x, y) / 32767.5f) - 1.0f;
+}
+
 float computeCandleBrightness() {
-    float timeSeconds = millis() / 1000.0f;
-    return constrain(BASE_BRIGHTNESS +
-                         SLOW_AMOUNT_A * sinf(timeSeconds * SLOW_SPEED_A) +
-                         SLOW_AMOUNT_B * sinf(timeSeconds * SLOW_SPEED_B) +
-                         MEDIUM_AMOUNT_A * cosf(timeSeconds * MEDIUM_SPEED_A) +
-                         MEDIUM_AMOUNT_B * cosf(timeSeconds * MEDIUM_SPEED_B) +
-                         FAST_AMOUNT/2 * tanhf(sinf(timeSeconds * (FAST_SPEED-0.0025) ) * 2.0f) +
-                         FAST_AMOUNT/2 * tanhf(sinf(timeSeconds * (FAST_SPEED+0.0025) ) * 2.0f)
-                     ,
-                     MIN_BRIGHTNESS,
-                     MAX_BRIGHTNESS);
+    uint32_t t = millis();
+
+    static uint32_t seedSlow = random(0, 65535);
+    static uint32_t seedBody = random(0, 65535);
+    static uint32_t seedFast = random(0, 65535);
+
+    static uint32_t nextDipAt = 0;
+    static uint32_t dipStart = 0;
+    static uint16_t dipDuration = 0;
+    static float dipDepth = 0.0f;
+
+    static uint32_t nextFlareAt = 0;
+    static uint32_t flareStart = 0;
+    static uint16_t flareDuration = 0;
+    static uint16_t flareAttack = 0;
+    static float flareHeight = 0.0f;
+
+    if (nextDipAt == 0) {
+        nextDipAt = t + random(700, 6500);
+    }
+
+    if (nextFlareAt == 0) {
+        nextFlareAt = t + random(500, 4200);
+    }
+
+    if ((int32_t)(t - nextDipAt) >= 0) {
+        dipStart = t;
+        dipDuration = random(80, 360);
+        dipDepth = random(5, 22) * 0.01f;
+        nextDipAt = t + random(1200, 8000);
+    }
+
+    if ((int32_t)(t - nextFlareAt) >= 0) {
+        flareStart = t;
+        flareDuration = random(130, 520);
+        flareAttack = random(12, 55);
+        flareHeight = random(7, 24) * 0.01f;
+        nextFlareAt = t + random(900, 6500);
+    }
+
+    float slow = noiseSigned(t * 2,  seedSlow) * 0.10f;
+    float body = noiseSigned(t * 10, seedBody) * 0.055f;
+    float fast = noiseSigned(t * 60, seedFast) * 0.025f;
+
+    float dip = 0.0f;
+    uint32_t dipAge = t - dipStart;
+    if (dipAge < dipDuration) {
+        float u = dipAge / (float)dipDuration;
+        dip = dipDepth * sinf(u * PI);
+    }
+
+    float flare = 0.0f;
+    uint32_t flareAge = t - flareStart;
+    if (flareAge < flareDuration) {
+        float attack = flareAttack / (float)flareDuration;
+        float u = flareAge / (float)flareDuration;
+        if (u < attack) {
+            float v = u / attack;
+            flare = flareHeight * v * v * (3.0f - 2.0f * v);
+        } else {
+            float v = (u - attack) / (1.0f - attack);
+            flare = flareHeight * (1.0f - v) * (1.0f - v);
+        }
+    }
+
+    return constrain(
+        BASE_BRIGHTNESS + slow + body + fast + flare - dip,
+        MIN_BRIGHTNESS,
+        MAX_BRIGHTNESS
+    );
 }
 
 // writeBrightness(0);
