@@ -26,6 +26,7 @@ void onCommandReceived(const String& id, const String& command) {
 }
 
 // Create an instance of the Arcanet library
+// Add a third argument of false to send/receive without relaying other nodes' commands.
 Arcanet arcanet(MY_ID, onCommandReceived);
 
 void setup() {
@@ -102,4 +103,3 @@ void sendPeerReport(const String& targetId) {
         arcanet.sendCommand(targetId, report);
     }
 }
-

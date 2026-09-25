@@ -51,8 +51,9 @@ void loop() {
 
 Main methods:
 
-- `Arcanet(String id, message_callback_t callback)` - Uses `const char*` callback arguments.
-- `Arcanet(String id, legacy_string_message_callback_t callback)` - Uses `String` callback arguments; used by the example sketch.
+- `Arcanet(String id, message_callback_t callback, bool relayEnabled = true)` - Uses `const char*` callback arguments.
+- `Arcanet(String id, legacy_string_message_callback_t callback, bool relayEnabled = true)` - Uses `String` callback arguments; used by the example sketch.
+- Both constructors send, receive, and relay by default. Passing `false` as the third argument disables relaying received commands while preserving discovery, peer tracking, deduplication, receive callbacks, and locally initiated sends.
 - `init()` - Configures WiFi/ESP-NOW, registers callbacks, resets RSSI/dedupe state, and schedules initial discovery.
 - `loop()` - Runs discovery, receive frame processing, peer aging, callback dispatch, and send queue processing.
 - `sendCommand(const String& id, const String& command)` - Sends a command toward a target ID through known peers.
