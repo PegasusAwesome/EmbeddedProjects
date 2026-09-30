@@ -14,7 +14,7 @@
 #define HEART_MIN_BRIGHTNESS  1
 #define HEART_MAX_BRIGHTNESS  255
 
-#define HEART_BPM 60
+#define HEART_BPM 36
 #define HEART_CYCLE_MS (60000 / HEART_BPM)
 
 CRGB leds[NUM_LEDS];
@@ -60,11 +60,11 @@ static void render() {
     const float beatLevel = heartbeatLevel(beatPhaseMs);
     const uint8_t brightness = HEART_MIN_BRIGHTNESS + uint8_t((HEART_MAX_BRIGHTNESS - HEART_MIN_BRIGHTNESS) * beatLevel);
 
-    fill_solid(leds, NUM_LEDS, CHSV(0, 255, brightness));
+    fill_solid(leds, NUM_LEDS, CHSV(91, 255, brightness));
 
-    Serial.print(beatPhaseMs);
-    Serial.print(" ");
-    Serial.println(brightness);
+//    Serial.print(beatPhaseMs);
+//    Serial.print(" ");
+//    Serial.println(brightness);
 
     FastLED.show();
 }
@@ -107,10 +107,6 @@ static void renderTest() {
 
     FastLED.show();
 }
-
-
-
-
 
 
 
