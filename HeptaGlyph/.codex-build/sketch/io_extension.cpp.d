@@ -1,0 +1,33 @@
+C:\Users\Marcel\idfworkspace\HeptaGlyph\.codex-build\sketch\io_extension.cpp.o: \
+ C:\Users\Marcel\idfworkspace\HeptaGlyph\.codex-build\sketch\io_extension.cpp \
+ C:\Users\Marcel\idfworkspace\HeptaGlyph\.codex-build\sketch\io_extension.h \
+ C:\Users\Marcel\idfworkspace\HeptaGlyph\.codex-build\sketch\i2c.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/newlib/platform_include/stdio.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_driver_i2c/include/driver/i2c_master.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_err.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_compiler.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_driver_i2c/include/driver/i2c_types.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/hal/include/hal/i2c_types.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/soc/esp32s3/include/soc/soc_caps.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/soc/esp32s3/include/soc/clk_tree_defs.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/hal/include/hal/hal_utils.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/hal/include/hal/gpio_types.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/soc/esp32s3/include/soc/gpio_num.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_bit_defs.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_rom/include/esp_rom_sys.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/soc/esp32s3/include/soc/reset_reasons.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_config.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_level.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_assert.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_color.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_buffer.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_timestamp.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_write.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_format.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_args.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_macros.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_assert.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_log_attr.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_attr.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/log/include/esp_private/log_attr.h

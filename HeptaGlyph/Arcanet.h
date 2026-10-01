@@ -63,9 +63,9 @@ public:
     unsigned long ageMs;
   };
 
-  // Constructor
-  Arcanet(String id, message_callback_t callback);
-  Arcanet(String id, legacy_string_message_callback_t callback);
+  // Sending and receiving are always enabled; relayEnabled controls retransmission.
+  Arcanet(String id, message_callback_t callback, bool relayEnabled = true);
+  Arcanet(String id, legacy_string_message_callback_t callback, bool relayEnabled = true);
 
   // Initialize the network
   void init();
@@ -202,6 +202,7 @@ private:
 
   // Member variables
   String _id;
+  bool _relayEnabled;
   uint8_t _myMac[6];
   message_callback_t _callback;
   legacy_string_message_callback_t _legacyStringCallback;

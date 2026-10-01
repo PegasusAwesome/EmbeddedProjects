@@ -1,0 +1,8 @@
+#line 1 "C:\\Users\\Marcel\\idfworkspace\\HeptaGlyph\\ui_bundle.c"
+#include "ui/ui.c"
+#include "ui/ui_helpers.c"
+#include "ui/ui_events.c"
+#include "ui/components/ui_comp_hook.c"
+#include "ui/screens/ui_Screen1.c"
+#include "ui/screens/ui_Screen2.c"
+#include "ui/screens/ui_Screen3.c"

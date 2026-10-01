@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 // Your device's unique ID
-const String MY_ID = "LUX2";
+const String MY_ID = "LUX3";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE = 2;  //D1 PT4115 DIM WHITE
@@ -111,6 +111,24 @@ void onCommandReceived(const String& id, const String& command) {
             relicStatus.b = 0;
             relicStatus.w = 0;
             handled = true;
+        } else if (command == "SET_MAGENTA" || command == "MAGENTA_ON") {
+            setRgbw({ 1, 0, 1, 0 });
+            handled = true;
+        } else if (command == "SET_CYAN" || command == "CYAN_ON") {
+            setRgbw({ 0, 1, 1, 0 });
+            handled = true;
+        } else if (command == "SET_YELLOW" || command == "YELLOW_ON") {
+            setRgbw({ 1, 1, 0, 0 });
+            handled = true;
+        } else if (command == "SET_RED" || command == "RED_ON") {
+            setRgbw({ 1, 0, 0, 0 });
+            handled = true;
+        } else if (command == "SET_GREEN" || command == "GREEN_ON") {
+            setRgbw({ 0, 1, 0, 0 });
+            handled = true;
+        } else if (command == "SET_BLUE" || command == "BLUE_ON") {
+            setRgbw({ 0, 0, 1, 0 });
+            handled = true;
         } else if (command.startsWith("SET_RGB")) {
             rgbw aRgbw = parseRGBFromCommand(command);
             setRgbw(aRgbw);
@@ -139,7 +157,7 @@ void onCommandReceived(const String& id, const String& command) {
 }
 
 // Create an instance of the Arcanet library
-Arcanet arcanet(MY_ID, onCommandReceived);
+Arcanet arcanet(MY_ID, onCommandReceived, false);
 
 
 void loop() {

@@ -34,8 +34,9 @@ static bool elapsedAtLeast(unsigned long now, unsigned long startedAt, unsigned 
 Arcanet* Arcanet::_instance = nullptr;
 
 
-Arcanet::Arcanet(String id, message_callback_t callback) {
+Arcanet::Arcanet(String id, message_callback_t callback, bool relayEnabled) {
     _id = id;
+    _relayEnabled = relayEnabled;
     _callback = callback;
     _legacyStringCallback = nullptr;
     _peerCount = 0;
@@ -66,8 +67,9 @@ Arcanet::Arcanet(String id, message_callback_t callback) {
     }
 }
 
-Arcanet::Arcanet(String id, legacy_string_message_callback_t callback) {
+Arcanet::Arcanet(String id, legacy_string_message_callback_t callback, bool relayEnabled) {
     _id = id;
+    _relayEnabled = relayEnabled;
     _callback = nullptr;
     _legacyStringCallback = callback;
     _peerCount = 0;
@@ -496,6 +498,10 @@ void Arcanet::processRxFrames() {
 
     if (_callback || _legacyStringCallback) {
       enqueueRecv(msg.id, msg.command);
+    }
+
+    if (!_relayEnabled) {
+      continue;
     }
 
     // Sanitize hopCount so negative values don't bypass the hop limit logic

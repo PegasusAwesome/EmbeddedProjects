@@ -1,7 +1,7 @@
 #include <FastLED.h>
 #include "src/Arcanet.h"
 
-const String MY_ID = "HEART1";
+const String MY_ID = "HEART31";
 
 // --- hardware ---
 #define DATA_PIN     1
@@ -44,7 +44,7 @@ void onCommandReceived(const String& id, const String& command) {
     }
 }
 
-Arcanet arcanet(MY_ID, onCommandReceived);
+Arcanet arcanet(MY_ID, onCommandReceived, false);
 
 static float smoothStep(float t) {
     if (t <= 0.0f) return 0.0f;

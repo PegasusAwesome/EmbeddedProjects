@@ -2,7 +2,7 @@
 #include "src/Arcanet.h"
 
 // Your device's unique ID
-const String MY_ID = "LANTERN17";
+const String MY_ID = "LANTERN16";
 
 //GPIO of Popwer (N-Fet) pin
 const uint8_t PIN_POWER          = 1;
@@ -60,7 +60,7 @@ void onCommandReceived(const String& id, const String& msg) {
 }
 
 // Create an instance of the Arcanet library
-Arcanet arcanet(MY_ID, onCommandReceived);
+Arcanet arcanet(MY_ID, onCommandReceived, true);
 
 void setup() {
     Serial.begin(115200);

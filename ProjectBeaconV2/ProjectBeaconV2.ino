@@ -153,7 +153,7 @@ void waitForSerial(uint32_t timeoutMs = 3000) {
 
 
 // Create an instance of the Arcanet library
-Arcanet arcanet(MY_ID, onCommandReceived);
+Arcanet arcanet(MY_ID, onCommandReceived, false);
 
 void setup() {
     Serial.begin(115200);

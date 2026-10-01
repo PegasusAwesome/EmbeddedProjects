@@ -1,0 +1,35 @@
+C:\Users\Marcel\idfworkspace\HeptaGlyph\.codex-build\libraries\lvgl\misc\lv_mem.c.o: \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_mem.c \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_mem.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/lv_conf_internal.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/lv_conf_kconfig.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/qio_opi/include/sdkconfig.h \
+ C:\Users\Marcel\AppData\Local\Arduino15\packages\esp32\tools\esp32s3-libs\3.3.8/include/esp_common/include/esp_attr.h \
+ C:\Users\Marcel\idfworkspace\HeptaGlyph/lv_conf.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_types.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_tlsf.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_gc.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_ll.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_timer.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/hal/lv_hal_tick.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/lv_conf_internal.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/draw/lv_img_cache.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/draw/lv_img_decoder.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/lv_conf_internal.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/draw/lv_img_buf.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_color.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/lv_conf_internal.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_assert.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_log.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_types.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_mem.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_math.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_area.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_fs.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_types.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/draw/lv_draw_mask.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_math.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/core/lv_obj_pos.h \
+ C:/Users/Marcel/Documents/Arduino/libraries/lvgl/src/misc/lv_area.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_assert.h \
+ C:\Users\Marcel\Documents\Arduino\libraries\lvgl\src\misc\lv_log.h

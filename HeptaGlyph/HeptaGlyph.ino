@@ -163,7 +163,7 @@ void onCommandReceived(const String& id, const String& command) {
     }
 }
 // Create an instance of the Arcanet library
-Arcanet arcanet(MY_ID, onCommandReceived);
+Arcanet arcanet(MY_ID, onCommandReceived, false);
 
 int eeCount = 0;
 
@@ -398,6 +398,30 @@ static void create_lux_card(lv_obj_t* parent, LuxArcana* lux, const RelicConfig*
     lv_obj_add_event_cb(lux->slider, on_lux_brightness_event, LV_EVENT_RELEASED, lux);
 }
 
+static void create_active_navigation_button(lv_obj_t* parent, const char* title, int32_t index) {
+    lv_obj_t* button = lv_btn_create(parent);
+    lv_obj_set_width(button, lv_pct(98));
+    lv_obj_set_height(button, lv_pct(20));
+    lv_obj_set_align(button, LV_ALIGN_CENTER);
+    lv_obj_add_flag(button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
+    lv_obj_clear_flag(button, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(button, lv_color_hex(0xFF7474), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_border_color(button, lv_color_hex(0xD4AF37), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_border_opa(button, LV_OPA_COVER, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_border_width(button, 4, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_text_color(button, lv_color_hex(0xFFFFFF), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_text_font(button, &lv_font_montserrat_14, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+
+    lv_obj_t* label = lv_label_create(button);
+    lv_label_set_text(label, title);
+    lv_obj_center(label);
+
+    // Keep Schijners, Lantaarns, Console in the same order on every screen.
+    // The active button has no navigation callback, so tapping it keeps this screen open.
+    lv_obj_move_to_index(button, index);
+}
+
 static void create_dynamic_relic_ui() {
     if (ui_Container5) {
         lv_obj_clean(ui_Container5);
@@ -444,6 +468,11 @@ void setup() {
     // Lock the mutex because LVGL APIs are not thread-safe
     if (lvgl_port_lock(-1)) {
         ui_init();
+
+        // SquareLine exports only the links to other screens; add the current tab here.
+        create_active_navigation_button(ui_Container4, "Schijners", 0);
+        create_active_navigation_button(ui_Container8, "Lantaarns", 1);
+        create_active_navigation_button(ui_Container10, "Console", 2);
 
         lv_label_set_long_mode(CONSOLE_LABEL, LV_LABEL_LONG_WRAP);
         create_dynamic_relic_ui();
