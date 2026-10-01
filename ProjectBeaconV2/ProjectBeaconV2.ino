@@ -46,9 +46,6 @@ int16_t  hue            = 0;
 uint32_t now            = millis();
 uint32_t start          = millis();
 
-const double amplitude = 80.0;
-const double period_milli_seconds = 30000.0;
-
 bool setupLanternPwm() {
     ledcSetClockSource(LEDC_USE_RC_FAST_CLK);
     if (!ledcAttachChannel(PIN_LANTERN, freq, resolution, LANTERN_LEDC_CHANNEL)) {
@@ -288,6 +285,7 @@ float clamp01(float x) {
 // Convert normalized brightness [0,1] to PWM output
 void writeBrightness(float brightness) {
     brightness = clamp01(brightness);
+    brightness = 0;
     uint32_t pwmValue = (uint32_t)(brightness * PWM_MAX);
     writeLanternPwm(pwmValue);
 }
@@ -340,7 +338,7 @@ float computeCandleBrightness() {
 
     float slow = noiseSigned(t * 2,  seedSlow) * 0.10f;
     float body = noiseSigned(t * 10, seedBody) * 0.055f;
-    float fast = noiseSigned(t * 60, seedFast) * 0.025f;
+    float fast = noiseSigned(t * 60, seedFast) * 0.035f;
 
     float dip = 0.0f;
     uint32_t dipAge = t - dipStart;

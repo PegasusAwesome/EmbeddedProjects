@@ -1,0 +1,150 @@
+{
+  "heart_pin": {
+    "triangles": 4968,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 394.116,
+    "min_mm": [
+      -6.0,
+      0.0,
+      0.0
+    ],
+    "max_mm": [
+      6.0,
+      19.5,
+      3.2
+    ],
+    "size_mm": [
+      12.0,
+      19.5,
+      3.2
+    ]
+  },
+  "tray_10_hearts": {
+    "triangles": 784,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 40880.702,
+    "min_mm": [
+      -75.0,
+      -14.0,
+      0.0
+    ],
+    "max_mm": [
+      75.0,
+      14.0,
+      10.0
+    ],
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "peg_fit_test": {
+    "triangles": 4498,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 12746.532,
+    "min_mm": [
+      -30.0,
+      -11.0,
+      0.0
+    ],
+    "max_mm": [
+      30.0,
+      11.0,
+      10.0
+    ],
+    "size_mm": [
+      60.0,
+      22.0,
+      10.0
+    ]
+  },
+  "tray_socket_3.4mm": {
+    "triangles": 784,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 40992.302,
+    "min_mm": [
+      -75.0,
+      -14.0,
+      0.0
+    ],
+    "max_mm": [
+      75.0,
+      14.0,
+      10.0
+    ],
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "tray_socket_3.5mm": {
+    "triangles": 784,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 40937.502,
+    "min_mm": [
+      -75.0,
+      -14.0,
+      0.0
+    ],
+    "max_mm": [
+      75.0,
+      14.0,
+      10.0
+    ],
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "tray_socket_3.7mm": {
+    "triangles": 784,
+    "nonmanifold_edges": 0,
+    "zero_area_triangles": 0,
+    "connected_components": 1,
+    "volume_mm3": 40822.303,
+    "min_mm": [
+      -75.0,
+      -14.0,
+      0.0
+    ],
+    "max_mm": [
+      75.0,
+      14.0,
+      10.0
+    ],
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "hearts_10_flat": {
+    "connected_components": 10,
+    "layout": "5 by 2",
+    "note": "Ten intentionally separate solid heart pins."
+  },
+  "assembly": {
+    "interference_volume_mm3": 0,
+    "socket_count": 10,
+    "socket_width_mm": 3.6,
+    "peg_width_mm": 3.2,
+    "clearance_per_side_mm": 0.19999999999999996,
+    "socket_depth_mm": 8.0,
+    "floor_thickness_mm": 2.0,
+    "heart_center_spacing_mm": 14.0,
+    "heart_gap_mm": 2.0
+  }
+}

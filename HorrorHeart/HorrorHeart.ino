@@ -1,6 +1,7 @@
 #include <FastLED.h>
-#include <WiFi.h>
-#include "esp_bt.h"
+#include "src/Arcanet.h"
+
+const String MY_ID = "HEART1";
 
 // --- hardware ---
 #define DATA_PIN     1
@@ -23,6 +24,27 @@ CRGB leds[NUM_LEDS];
 // --- state ---
 uint32_t tLastMove = 0;
 uint32_t tLastCol  = 0;
+uint32_t beatStartedAtMs = 0;
+bool heartbeatEnabled = true;
+uint8_t heartHue = 99;
+
+void onCommandReceived(const String& id, const String& command) {
+    if (id != MY_ID && id != "HEARTALL") return;
+
+    if (command == "HEARTBEAT_ON") {
+        beatStartedAtMs = millis();
+        heartbeatEnabled = true;
+    } else if (command == "HEARTBEAT_OFF") {
+        heartbeatEnabled = false;
+        FastLED.clear(true);
+    } else if (command == "HEARTBEAT_HEALTHY") {
+        heartHue = 0;
+    } else if (command == "HEARTBEAT_SICKLY") {
+        heartHue = 99;
+    }
+}
+
+Arcanet arcanet(MY_ID, onCommandReceived);
 
 static float smoothStep(float t) {
     if (t <= 0.0f) return 0.0f;
@@ -56,11 +78,11 @@ static float heartbeatLevel(uint32_t elapsedMs) {
 }
 
 static void render() {
-    const uint32_t beatPhaseMs = millis() % HEART_CYCLE_MS;
+    const uint32_t beatPhaseMs = (millis() - beatStartedAtMs) % HEART_CYCLE_MS;
     const float beatLevel = heartbeatLevel(beatPhaseMs);
     const uint8_t brightness = HEART_MIN_BRIGHTNESS + uint8_t((HEART_MAX_BRIGHTNESS - HEART_MIN_BRIGHTNESS) * beatLevel);
 
-    fill_solid(leds, NUM_LEDS, CHSV(91, 255, brightness));
+    fill_solid(leds, NUM_LEDS, CHSV(heartHue, 255, brightness));
 
 //    Serial.print(beatPhaseMs);
 //    Serial.print(" ");
@@ -137,12 +159,15 @@ void setup() {
   tLastMove = millis();
   tLastCol  = millis();
 
-  WiFi.mode(WIFI_OFF); 
-  esp_bt_controller_disable();
   setCpuFrequencyMhz(80);
+  arcanet.init();
+  beatStartedAtMs = millis();
 }
 
 void loop() {
-    render();
+    arcanet.loop();
+    if (heartbeatEnabled) {
+        render();
+    }
     sleepMs(15);
 }

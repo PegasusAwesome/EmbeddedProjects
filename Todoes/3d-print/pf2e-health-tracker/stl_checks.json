@@ -1,0 +1,100 @@
+{
+  "heart_pin.stl": {
+    "triangles": 4968,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 394.116,
+    "size_mm": [
+      12.0,
+      19.5,
+      3.2
+    ]
+  },
+  "hearts_10_flat.stl": {
+    "triangles": 49680,
+    "connected_components": 10,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 3941.156,
+    "size_mm": [
+      76.0,
+      43.5,
+      3.2
+    ]
+  },
+  "peg_fit_test.stl": {
+    "triangles": 4498,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 12746.532,
+    "size_mm": [
+      60.0,
+      22.0,
+      10.0
+    ]
+  },
+  "tray-fit-options\\tray_socket_3.4mm.stl": {
+    "triangles": 784,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 40992.302,
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "tray-fit-options\\tray_socket_3.5mm.stl": {
+    "triangles": 784,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 40937.502,
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "tray-fit-options\\tray_socket_3.7mm.stl": {
+    "triangles": 784,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 40822.303,
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  },
+  "tray_10_hearts.stl": {
+    "triangles": 784,
+    "connected_components": 1,
+    "watertight": true,
+    "consistent_winding": true,
+    "duplicate_triangles": 0,
+    "degenerate_triangles": 0,
+    "volume_mm3": 40880.702,
+    "size_mm": [
+      150.0,
+      28.0,
+      10.0
+    ]
+  }
+}
