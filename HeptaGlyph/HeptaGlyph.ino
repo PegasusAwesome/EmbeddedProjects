@@ -76,6 +76,10 @@ struct LuxArcana : Relic {
     lv_obj_t* slider;
 };
 
+struct StatusRelic : Relic {
+    lv_obj_t* statusLabel;
+};
+
 struct RelicConfig {
     const char* netID;
     const char* label;
@@ -105,11 +109,52 @@ static const RelicConfig LUX_CONFIGS[] = {
     { "LUX6", "Straler 6" },
 };
 
+static const RelicConfig OTHER_CONFIGS[] = {
+    { "BOOK144", "BOOK144" },
+    { "MUSIC145", "MUSIC145" },
+    { "REPEATER146", "REPEATER146" },
+    { "CURTAIN150", "CURTAIN150" },
+    { "CURTAIN151", "CURTAIN151" },
+    { "CURTAIN152", "CURTAIN152" },
+    { "CURTAIN153", "CURTAIN153" },
+    { "CURTAIN154", "CURTAIN154" },
+    { "CURTAIN155", "CURTAIN155" },
+    { "CURTAIN156", "CURTAIN156" },
+    { "CHANDELIER32", "CHANDELIER32" },
+    { "HEART31", "HEART31" },
+};
+
+struct ScreenCommand {
+    const char* target;
+    const char* command;
+};
+
+static const ScreenCommand SCREEN_COMMANDS[] = {
+    { "ALLCURTAINS", "ON" },
+    { "ALLCURTAINS", "OFF" },
+    { "ALLCURTAINS", "FIRE" },
+    { "ALLCURTAINS", "BLUEHELL" },
+    { "ALLCURTAINS", "HEARTBEAT" },
+    { "ALLCURTAINS", "GREEN" },
+    { "HEART31", "HEARTBEAT_ON" },
+    { "HEART31", "HEARTBEAT_OFF" },
+    { "HEART31", "HEARTBEAT_HEALTHY" },
+    { "HEART31", "HEARTBEAT_SICKLY" },
+    { "CHANDELIER32", "CHANDELIER_ON" },
+    { "CHANDELIER32", "CHANDELIER_OFF" },
+    { "CHANDELIER32", "CHANDELIER_COLOR_RED" },
+    { "CHANDELIER32", "CHANDELIER_COLOR_NORMAL" },
+    { "CHANDELIER32", "CHANDELIER_COLOR_GREEN" },
+};
+
 static const size_t LANTERN_COUNT = sizeof(LANTERN_CONFIGS) / sizeof(LANTERN_CONFIGS[0]);
 static const size_t LUX_COUNT = sizeof(LUX_CONFIGS) / sizeof(LUX_CONFIGS[0]);
+static const size_t OTHER_COUNT = sizeof(OTHER_CONFIGS) / sizeof(OTHER_CONFIGS[0]);
 
 static Lantern lanterns[LANTERN_COUNT];
 static LuxArcana luxes[LUX_COUNT];
+static StatusRelic otherRelics[OTHER_COUNT];
+static lv_obj_t* otherScreen = nullptr;
 
 static inline lv_style_selector_t lv_selector(uint32_t part, uint32_t state) {
     return static_cast<lv_style_selector_t>(part | state);
@@ -398,7 +443,15 @@ static void create_lux_card(lv_obj_t* parent, LuxArcana* lux, const RelicConfig*
     lv_obj_add_event_cb(lux->slider, on_lux_brightness_event, LV_EVENT_RELEASED, lux);
 }
 
-static void create_active_navigation_button(lv_obj_t* parent, const char* title, int32_t index) {
+static void on_navigation_button_event(lv_event_t* e) {
+    lv_obj_t* screen = static_cast<lv_obj_t*>(lv_event_get_user_data(e));
+    if (screen && screen != lv_scr_act()) {
+        lv_scr_load(screen);
+    }
+}
+
+static void create_navigation_button(lv_obj_t* parent, const char* title, int32_t index,
+                                     lv_obj_t* target, bool active) {
     lv_obj_t* button = lv_btn_create(parent);
     lv_obj_set_width(button, lv_pct(98));
     lv_obj_set_height(button, lv_pct(20));
@@ -407,9 +460,9 @@ static void create_active_navigation_button(lv_obj_t* parent, const char* title,
     lv_obj_clear_flag(button, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(button, lv_color_hex(0xFF7474), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
     lv_obj_set_style_bg_opa(button, LV_OPA_COVER, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
-    lv_obj_set_style_border_color(button, lv_color_hex(0xD4AF37), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_border_color(button, lv_color_hex(active ? 0xD4AF37 : 0x1E293B), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
     lv_obj_set_style_border_opa(button, LV_OPA_COVER, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
-    lv_obj_set_style_border_width(button, 4, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+    lv_obj_set_style_border_width(button, active ? 4 : 3, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
     lv_obj_set_style_text_color(button, lv_color_hex(0xFFFFFF), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
     lv_obj_set_style_text_font(button, &lv_font_montserrat_14, lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
 
@@ -417,9 +470,103 @@ static void create_active_navigation_button(lv_obj_t* parent, const char* title,
     lv_label_set_text(label, title);
     lv_obj_center(label);
 
-    // Keep Schijners, Lantaarns, Console in the same order on every screen.
-    // The active button has no navigation callback, so tapping it keeps this screen open.
+    // Keep Schijners, Lantaarns, Console, Overig in the same order on every screen.
+    if (!active) {
+        lv_obj_add_event_cb(button, on_navigation_button_event, LV_EVENT_CLICKED, target);
+    }
     lv_obj_move_to_index(button, index);
+}
+
+static lv_obj_t* create_plain_container(lv_obj_t* parent, int widthPct, int height) {
+    lv_obj_t* container = lv_obj_create(parent);
+    lv_obj_remove_style_all(container);
+    lv_obj_set_size(container, lv_pct(widthPct), height);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    return container;
+}
+
+static void create_status_card(lv_obj_t* parent, StatusRelic* relic, const RelicConfig* config, size_t index) {
+    relic->name = config->label;
+    relic->netID = config->netID;
+    relic->lastUpdate = 0;
+    relic->mainButton = lv_obj_create(parent);
+    style_relic_button(relic->mainButton, 96, 100);
+    lv_obj_clear_flag(relic->mainButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);
+    lv_obj_set_style_pad_all(relic->mainButton, 8, LV_PART_MAIN);
+    lv_obj_set_grid_cell(relic->mainButton, LV_GRID_ALIGN_STRETCH, index % 6, 1,
+                        LV_GRID_ALIGN_STRETCH, index / 6, 1);
+    relic->nameLabel = create_relic_label(relic->mainButton, config->label);
+    relic->networkIcon = create_top_icon(relic->mainButton, &ui_img_wifi_disabled_png, -30);
+    relic->batteryIcon = create_top_icon(relic->mainButton, &ui_img_battery_disabled_png, 0);
+    relic->statusLabel = lv_label_create(relic->mainButton);
+    lv_label_set_text(relic->statusLabel, "Geen status");
+    lv_obj_center(relic->statusLabel);
+    lv_obj_set_style_text_color(relic->statusLabel, lv_color_hex(0x0D0D0D), LV_PART_MAIN);
+}
+
+static void on_screen_command_event(lv_event_t* e) {
+    const ScreenCommand* command = static_cast<const ScreenCommand*>(lv_event_get_user_data(e));
+    if (!command || lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    // Arcanet separates the target ID from the command payload.
+    arcanet.sendCommand(command->target, command->command);
+}
+
+static void create_other_screen() {
+    otherScreen = lv_obj_create(nullptr);
+    lv_obj_clear_flag(otherScreen, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(otherScreen, lv_color_hex(0x1E293B), LV_PART_MAIN);
+
+    lv_obj_t* layout = create_plain_container(otherScreen, 100, lv_pct(100));
+    lv_obj_set_flex_flow(layout, LV_FLEX_FLOW_ROW);
+    lv_obj_t* navigation = create_plain_container(layout, 20, lv_pct(100));
+    lv_obj_set_flex_flow(navigation, LV_FLEX_FLOW_COLUMN);
+    create_navigation_button(navigation, "Schijners", 0, ui_Screen1, false);
+    create_navigation_button(navigation, "Lantaarns", 1, ui_Screen2, false);
+    create_navigation_button(navigation, "Console", 2, ui_Screen3, false);
+    create_navigation_button(navigation, "Overig", 3, otherScreen, true);
+
+    lv_obj_t* content = create_plain_container(layout, 80, lv_pct(100));
+    lv_obj_set_style_pad_all(content, 10, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(content, 10, LV_PART_MAIN);
+    lv_obj_set_flex_flow(content, LV_FLEX_FLOW_COLUMN);
+
+    lv_obj_t* heading = lv_label_create(content);
+    lv_label_set_text(heading, "Apparaten");
+
+    static const lv_coord_t deviceColumns[] = {
+        LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST
+    };
+    static const lv_coord_t deviceRows[] = { 96, 96, LV_GRID_TEMPLATE_LAST };
+    lv_obj_t* devices = create_plain_container(content, 100, 200);
+    lv_obj_set_style_pad_row(devices, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(devices, 8, LV_PART_MAIN);
+    lv_obj_set_grid_dsc_array(devices, deviceColumns, deviceRows);
+    for (size_t i = 0; i < OTHER_COUNT; ++i) {
+        create_status_card(devices, &otherRelics[i], &OTHER_CONFIGS[i], i);
+    }
+
+    heading = lv_label_create(content);
+    lv_label_set_text(heading, "Commandos");
+
+    static const lv_coord_t commandColumns[] = { LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST };
+    static const lv_coord_t commandRows[] = { 56, 56, 56, 56, 56, LV_GRID_TEMPLATE_LAST };
+    lv_obj_t* commands = create_plain_container(content, 100, 312);
+    lv_obj_set_style_pad_row(commands, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(commands, 8, LV_PART_MAIN);
+    lv_obj_set_grid_dsc_array(commands, commandColumns, commandRows);
+    for (size_t i = 0; i < sizeof(SCREEN_COMMANDS) / sizeof(SCREEN_COMMANDS[0]); ++i) {
+        lv_obj_t* button = lv_btn_create(commands);
+        style_relic_button(button, 56, 100);
+        lv_obj_set_style_bg_color(button, lv_color_hex(0xFF7474), LV_PART_MAIN);
+        lv_obj_set_style_pad_all(button, 8, LV_PART_MAIN);
+        lv_obj_set_grid_cell(button, LV_GRID_ALIGN_STRETCH, i % 3, 1, LV_GRID_ALIGN_STRETCH, i / 3, 1);
+        lv_obj_t* label = lv_label_create(button);
+        lv_label_set_text_fmt(label, "%s\n%s", SCREEN_COMMANDS[i].target, SCREEN_COMMANDS[i].command);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+        lv_obj_center(label);
+        lv_obj_add_event_cb(button, on_screen_command_event, LV_EVENT_CLICKED,
+                            const_cast<ScreenCommand*>(&SCREEN_COMMANDS[i]));
+    }
 }
 
 static void create_dynamic_relic_ui() {
@@ -469,15 +616,18 @@ void setup() {
     if (lvgl_port_lock(-1)) {
         ui_init();
 
-        // SquareLine exports only the links to other screens; add the current tab here.
-        create_active_navigation_button(ui_Container4, "Schijners", 0);
-        create_active_navigation_button(ui_Container8, "Lantaarns", 1);
-        create_active_navigation_button(ui_Container10, "Console", 2);
-
         lv_label_set_long_mode(CONSOLE_LABEL, LV_LABEL_LONG_WRAP);
         create_dynamic_relic_ui();
 
-        
+        create_other_screen();
+        // Complete the SquareLine sidebars with the current tab and the fourth screen.
+        create_navigation_button(ui_Container4, "Schijners", 0, ui_Screen1, true);
+        create_navigation_button(ui_Container8, "Lantaarns", 1, ui_Screen2, true);
+        create_navigation_button(ui_Container10, "Console", 2, ui_Screen3, true);
+        create_navigation_button(ui_Container4, "Overig", 3, otherScreen, false);
+        create_navigation_button(ui_Container8, "Overig", 3, otherScreen, false);
+        create_navigation_button(ui_Container10, "Overig", 3, otherScreen, false);
+
         lvgl_port_unlock();
     }
 
@@ -526,6 +676,14 @@ void checkStaleness() {
                     lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
                 } else {
                     lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x8F8376), lv_selector(LV_PART_MAIN, LV_STATE_DEFAULT));
+                }
+            }
+            for (auto &r : otherRelics) {
+                if (r.lastUpdate < (now-tMinStalenessTime)) {
+                    lv_img_set_src(r.networkIcon, &ui_img_wifi_disabled_png);
+                    lv_img_set_src(r.batteryIcon, &ui_img_battery_disabled_png);
+                    lv_label_set_text(r.statusLabel, r.lastUpdate ? "Offline" : "Geen status");
+                    lv_obj_set_style_bg_color(r.mainButton, lv_color_hex(0x9CA3AF), LV_PART_MAIN);
                 }
             }
             lvgl_port_unlock();
@@ -582,6 +740,24 @@ static const lv_img_dsc_t *pick_wifi_icon(int rssi_dbm) {
 static const lv_img_dsc_t *pick_lantern_icon(int on) {
     return on ? &ui_img_lantern_on_png : &ui_img_lantern_off_png;
 }  
+
+static StatusRelic* find_other_relic_by_id(const char* id) {
+    for (auto &relic : otherRelics) {
+        if (strcmp(relic.netID, id) == 0) return &relic;
+    }
+    return nullptr;
+}
+
+static void ui_update_other_status(StatusRelic* relic, int batt_mv, int rssi_dbm, const char* status) {
+    if (lvgl_port_lock(-1)) {
+        lv_img_set_src(relic->networkIcon, pick_wifi_icon(rssi_dbm));
+        lv_img_set_src(relic->batteryIcon, batt_mv > 0 ? pick_lantern_battery_icon(batt_mv) : &ui_img_battery_disabled_png);
+        lv_label_set_text(relic->statusLabel, status);
+        lv_obj_set_style_bg_color(relic->mainButton, lv_color_hex(0x8F8376), LV_PART_MAIN);
+        relic->lastUpdate = millis();
+        lvgl_port_unlock();
+    }
+}
 
 void ui_update_lantern_status(Lantern* lantern, int batt_mv, int rssi_dbm, char* status) {
     if (lantern && lantern->mainButton && lantern->networkIcon && lantern->batteryIcon && lantern->relicIcon && lvgl_port_lock(-1)) {
@@ -651,6 +827,12 @@ int ui_apply_status_string(const char *msg) {
     }
     if (!status1) return -2;
     if(!id) return -2;
+
+    StatusRelic* otherRelic = find_other_relic_by_id(id);
+    if (otherRelic) {
+        ui_update_other_status(otherRelic, mv, rssi, status1);
+        return 0;
+    }
 
     String sStatus1 = String(status1);
     Lantern* lantern = findLanternByNetID(id);
