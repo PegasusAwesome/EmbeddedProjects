@@ -17,6 +17,7 @@ const String MY_ID = "HEART31";
 
 #define HEART_BPM 36
 #define HEART_CYCLE_MS (60000 / HEART_BPM)
+constexpr uint32_t STATUS_UPDATE_PERIOD_MS = 60000;
 
 CRGB leds[NUM_LEDS];
 
@@ -27,8 +28,20 @@ uint32_t tLastCol  = 0;
 uint32_t beatStartedAtMs = 0;
 bool heartbeatEnabled = true;
 uint8_t heartHue = 99;
+uint32_t lastStatusSentAtMs = 0;
+uint32_t statusUpdateDueAtMs = 0;
+bool statusUpdatePending = false;
+
+void scheduleStatusUpdate(uint32_t delayMs) {
+    statusUpdatePending = true;
+    statusUpdateDueAtMs = millis() + delayMs;
+}
 
 void onCommandReceived(const String& id, const String& command) {
+    if (command == "SEND_UPDATE" && (id == MY_ID || id == "HEARTALL" || id == "ALL")) {
+        scheduleStatusUpdate(10);
+        return;
+    }
     if (id != MY_ID && id != "HEARTALL") return;
 
     if (command == "HEARTBEAT_ON") {
@@ -41,7 +54,10 @@ void onCommandReceived(const String& id, const String& command) {
         heartHue = 0;
     } else if (command == "HEARTBEAT_SICKLY") {
         heartHue = 99;
+    } else {
+        return;
     }
+    scheduleStatusUpdate(10);
 }
 
 Arcanet arcanet(MY_ID, onCommandReceived, false);
@@ -162,10 +178,28 @@ void setup() {
   setCpuFrequencyMhz(80);
   arcanet.init();
   beatStartedAtMs = millis();
+  lastStatusSentAtMs = millis();
+  scheduleStatusUpdate(10000);
+}
+
+void sendStatusUpdate() {
+    const uint32_t now = millis();
+    if (!statusUpdatePending && now - lastStatusSentAtMs >= STATUS_UPDATE_PERIOD_MS) {
+        scheduleStatusUpdate(0);
+    }
+    if (!statusUpdatePending || (int32_t)(now - statusUpdateDueAtMs) < 0) return;
+
+    statusUpdatePending = false;
+    lastStatusSentAtMs = now;
+    // No battery sense pin is configured; zero reports an unavailable reading.
+    const String status = MY_ID + "_BLVL_0_SGNL_" + String(arcanet.getBestRssi())
+        + "_STATE_" + (heartbeatEnabled ? "ON" : "OFF");
+    arcanet.sendCommand("CONTROLLER", status);
 }
 
 void loop() {
     arcanet.loop();
+    sendStatusUpdate();
     if (heartbeatEnabled) {
         render();
     }

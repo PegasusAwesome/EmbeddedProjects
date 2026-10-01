@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 // Your device's unique ID
-const String MY_ID = "LUX3";
+const String MY_ID = "LUX2";
 
 //RGBW PWM Pins
 const uint8_t DIM_PIN_WHITE = 2;  //D1 PT4115 DIM WHITE
